@@ -1,3 +1,5 @@
+#################################################
+
 import numpy as np # for vector manipulations
 import graphics
 import matplotlib.pyplot as plt # to experiment with histograms
