@@ -1,18 +1,18 @@
 # Interpretability
 
-## Guidelines to work on this project: 
+## How to work on this project: 
 1. open a command prompt
 
-### go to project folder C:\Users\alexf\Interpretability
+2. go to project folder C:\Users\alexf\Interpretability
 
-### git pull 
+3. git pull 
 
-### jupyter lab 
+4. jupyter lab 
 
-### do some work 
+5. do some work 
 
-### git add change_file.ipynb
+6. git add change_file.ipynb
 
-### git commit -m "I did a lot of work today"
+7. git commit -m "I did a lot of work today"
 
-### git push
+8. git push
