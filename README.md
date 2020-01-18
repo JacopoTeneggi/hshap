@@ -3,16 +3,16 @@
 Guidelines to work on this project: 
 *open a command prompt
 
-*go to project folder C:\Users\alexf\Interpretability
++go to project folder C:\Users\alexf\Interpretability
 
-*git pull 
++git pull 
 
-*jupyter lab 
++jupyter lab 
 
-*do some work 
++do some work 
 
-*git add change_file.ipynb
++git add change_file.ipynb
 
-*git commit -m "I did a lot of work today"
++git commit -m "I did a lot of work today"
 
-*git push
++git push
