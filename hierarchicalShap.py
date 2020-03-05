@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 
 
 def display_cropped_images(images, score):
@@ -15,7 +15,7 @@ def display_cropped_images(images, score):
       axs[i,j].imshow(im)
       axs[i,j].set_title("#%d score:%f " %(4*i + j, score[4*i + j]))
 
-def construct_subsets(net, im, label, start = (0,0), region_size = (None, None), background = None):
+def construct_subsets(im, start = (0,0), region_size = (None, None), background = None):
   if (region_size[0] == None or region_size[1] == None):
     region_size = im.numpy().shape[1:3]
 
@@ -88,25 +88,28 @@ def construct_subsets(net, im, label, start = (0,0), region_size = (None, None),
   subsets[14] = im1
   subsets[15] = im_
 
-  outputs = net(subsets)
-  
+  return subsets
+
+def subsetScores(net, sub, label):
+  outputs = net(sub)
+
   score = np.zeros(16)
-  score[0] = outputs[0,label]
-  score[1] = outputs[1,label]
-  score[2] = outputs[2,label]
-  score[3] = outputs[3,label]
-  score[4] = outputs[4,label]
-  score[5] = outputs[5,label]
-  score[6] = outputs[6,label]
-  score[7] = outputs[7,label]
-  score[8] = outputs[8,label]
-  score[9] = outputs[9,label]
-  score[10] = outputs[10,label]
-  score[11] = outputs[11,label]
-  score[12] = outputs[12,label]
-  score[13] = outputs[13,label]
-  score[14] = outputs[14,label]
-  score[15] = outputs[15,label]
+  score[0] = outputs[0, label]
+  score[1] = outputs[1, label]
+  score[2] = outputs[2, label]
+  score[3] = outputs[3, label]
+  score[4] = outputs[4, label]
+  score[5] = outputs[5, label]
+  score[6] = outputs[6, label]
+  score[7] = outputs[7, label]
+  score[8] = outputs[8, label]
+  score[9] = outputs[9, label]
+  score[10] = outputs[10, label]
+  score[11] = outputs[11, label]
+  score[12] = outputs[12, label]
+  score[13] = outputs[13, label]
+  score[14] = outputs[14, label]
+  score[15] = outputs[15, label]
   return subsets, score
 
 def constructShapMap(score):
@@ -144,10 +147,9 @@ def display_salient(im, srs):
     plt.plot((start[1]+quadrant_size[1])*np.ones(N_points), np.linspace(start[0], start[0]+quadrant_size[0], N_points), 'r')
 
 def do_all(net, im, label, strt, rgs, debug = False):
-  images_final, score = construct_subsets(net, im, label, strt, rgs)
-
+  images_final = construct_subsets(im, strt, rgs)
+  score = subsetScores(net, images_final, label)
   sm = constructShapMap(score)
-
 
   if (debug): 
     display_cropped_images(images_final, score) 
