@@ -1,4 +1,8 @@
-def display_cropped_images(images, score): 
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
+
+def display_cropped_images(images, score):
   mean = np.array([0.5, 0.5, 0.5])
   sd = np.array([0.5, 0.5, 0.5])
   fig, axs = plt.subplots(4,4, figsize=(15,15))
