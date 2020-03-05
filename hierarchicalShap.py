@@ -110,7 +110,7 @@ def subsetScores(net, sub, label):
   score[13] = outputs[13, label]
   score[14] = outputs[14, label]
   score[15] = outputs[15, label]
-  return subsets, score
+  return score
 
 def constructShapMap(score):
   phi1 = (score[14]-score[15])/4 + (score[8]-score[11] + score[9]-score[12] + score[10]-score[13])/12 + (score[2]-score[5] + score[3]-score[6] + score[4]-score[7])/12 + (score[0]-score[1])/4
