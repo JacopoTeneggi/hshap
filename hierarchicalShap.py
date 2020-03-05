@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+
 def display_cropped_images(images, score):
   mean = np.array([0.5, 0.5, 0.5])
   sd = np.array([0.5, 0.5, 0.5])
@@ -13,7 +15,7 @@ def display_cropped_images(images, score):
       axs[i,j].imshow(im)
       axs[i,j].set_title("#%d score:%f " %(4*i + j, score[4*i + j]))
 
-def construct_subsets(im, label, start = (0,0), region_size = (None, None), background = None): 
+def construct_subsets(net, im, label, start = (0,0), region_size = (None, None), background = None):
   if (region_size[0] == None or region_size[1] == None):
     region_size = im.numpy().shape[1:3]
 
