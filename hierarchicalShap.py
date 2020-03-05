@@ -127,8 +127,8 @@ def get_salient_regions(image, shap_map,  start, quadrant_size):
         srs.append( ((x,y),(quadrant_size)) )
   return srs
 
-def display_salient(im, srs):
-  plt.figure(figsize = FIGSIZE)
+def display_salient(im, srs, fsize):
+  plt.figure(figsize = fsize)
   sample_image = im.numpy().transpose(1,2,0)
   mean = np.array([0.5, 0.5, 0.5])
   sd = np.array([0.5, 0.5, 0.5])
