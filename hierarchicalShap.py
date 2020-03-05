@@ -143,8 +143,8 @@ def display_salient(im, srs):
     plt.plot(start[1]*np.ones(N_points), np.linspace(start[0], start[0]+quadrant_size[0], N_points), 'r')
     plt.plot((start[1]+quadrant_size[1])*np.ones(N_points), np.linspace(start[0], start[0]+quadrant_size[0], N_points), 'r')
 
-def do_all(im, label, strt, rgs, debug = False):
-  images_final, score = construct_subsets(im, label, strt, rgs) 
+def do_all(net, im, label, strt, rgs, debug = False):
+  images_final, score = construct_subsets(net, im, label, strt, rgs)
 
   sm = constructShapMap(score)
 
