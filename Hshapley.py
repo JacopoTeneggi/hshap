@@ -203,7 +203,7 @@ class HierarchicalShap:
           while (len(srs) > 0):
             all = []
             for sr in srs:
-              s = HS.do_all(image, label, sr[0], sr[1], tol)
+              s = self.do_all(image, label, sr[0], sr[1], tol)
               if (s == []):
                 finished.append(((sr[0]), (sr[1])))
               else:
