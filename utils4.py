@@ -119,7 +119,7 @@ def test(net, loader):
     return wrong_im, wrong_label, wrongly_predicted_label
 
 
-def train(net, optimizer, criterion, max_epochs, dataloader, valloader, , epsilon):
+def train(net, optimizer, criterion, max_epochs, dataloader, valloader ):
     converged = False
     epsilon = 0.0001
     train_loss, val_loss, train_accuracy, val_accuracy = [], [], [], []
