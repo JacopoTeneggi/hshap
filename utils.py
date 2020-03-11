@@ -26,7 +26,7 @@ def input2image(input, mean, std):
     sample_image = input.numpy().transpose(1, 2, 0)
     return denormalize(sample_image, mean, std)
 
-def display_image(im, true_label, predicted_label=None, figure_size = (12, 10)):
+def display_image(im, true_label, predicted_label=None, figure_size = (8, 5)):
     plt.figure(figsize=figure_size)
     plt.imshow(im)
     title_ = "True label : " + str(true_label)
