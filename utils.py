@@ -16,7 +16,7 @@ def datasetMeanStd(loader):
         std += images.std(2).sum(0)
     mean /= N
     std /= (N-1)
-    return mean, std
+    return mean.numpy(), std.numpy()
 
 
 def denormalize(im, mean, std):
