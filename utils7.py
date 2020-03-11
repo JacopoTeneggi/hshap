@@ -78,15 +78,15 @@ def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
     _ = ax1.plot(x_scale, train_loss)
     _ = ax1.plot(x_scale, val_loss)
     ax1.legend(["Loss on the training set", "Loss on the validation set"])
-    ax1.xlabel("Number of generations")
-    ax1.ylabel("Evaluation of the loss function")
+    ax1.set_xlabel("Number of generations")
+    ax1.set_ylabel("Evaluation of the loss function")
 
     x_scale = np.linspace(0, len(train_accuracy)- 1, len(train_accuracy) )
     _ = ax2.plot(x_scale, train_accuracy)
     _ = ax2.plot(x_scale, val_accuracy)
     ax2.legend(["Training accuracy", "Validation accuracy"])
-    ax2.xlabel("Number of generations")
-    ax2.ylabel("Accuracy ")
+    ax2.set_xlabel("Number of generations")
+    ax2.set_ylabel("Accuracy ")
 
 
 def test(net, loader):
