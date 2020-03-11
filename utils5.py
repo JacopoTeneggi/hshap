@@ -57,36 +57,36 @@ def training_accuracy(network, loader):
   return 100 * correct/total
 
 def validation_stats(network, loader, criterion):
-  total_loss = 0
-  correct = 0
-  total = 0
-  with torch.no_grad():
-    for data in loader:
-      images, labels = data
-      outputs = network(images)
-      _, predicted = torch.max(outputs.data, 1)
-      total += labels.size(0)
-      correct += (predicted == labels).sum().item()
-      loss = criterion(outputs, labels)
-      total_loss += loss.item()
+    total_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in loader:
+          images, labels = data
+          outputs = network(images)
+          _, predicted = torch.max(outputs.data, 1)
+          total += labels.size(0)
+          correct += (predicted == labels).sum().item()
+          loss = criterion(outputs, labels)
+          total_loss += loss.item()
 
   return (100 * correct/total, total_loss/len(loader.dataset))
 
 def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
-  fig, (ax1, ax2) = plt.subplots(1,3, figsize = (15,5))
-  x_scale = np.linspace(0, len(train_loss)- 1, len(train_loss) )
-  _ = ax1.plot(x_scale, train_loss)
-  _ = ax1.plot(x_scale, val_loss)
-  ax1.legend(["Loss on the training set", "Loss on the validation set"])
-  ax1.xlabel("Number of generations")
-  ax1.ylabel("Evaluation of the loss function")
+    fig, (ax1, ax2) = plt.subplots(1,2, figsize = (10,5))
+    x_scale = np.linspace(0, len(train_loss)- 1, len(train_loss) )
+    _ = ax1.plot(x_scale, train_loss)
+    _ = ax1.plot(x_scale, val_loss)
+    ax1.legend(["Loss on the training set", "Loss on the validation set"])
+    ax1.xlabel("Number of generations")
+    ax1.ylabel("Evaluation of the loss function")
 
-  x_scale = np.linspace(0, len(train_accuracy)- 1, len(train_accuracy) )
-  _ = ax2.plot(x_scale, train_accuracy)
-  _ = ax2.plot(x_scale, val_accuracy)
-  ax2.legend(["Training accuracy", "Validation accuracy"])
-  ax2.xlabel("Number of generations")
-  ax2.ylabel("Accuracy ")
+    x_scale = np.linspace(0, len(train_accuracy)- 1, len(train_accuracy) )
+    _ = ax2.plot(x_scale, train_accuracy)
+    _ = ax2.plot(x_scale, val_accuracy)
+    ax2.legend(["Training accuracy", "Validation accuracy"])
+    ax2.xlabel("Number of generations")
+    ax2.ylabel("Accuracy ")
 
 
 def test(net, loader):
