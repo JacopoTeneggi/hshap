@@ -70,7 +70,7 @@ def validation_stats(network, loader, criterion):
           loss = criterion(outputs, labels)
           total_loss += loss.item()
 
-  return (100 * correct/total, total_loss/len(loader.dataset))
+    return (100 * correct/total, total_loss/len(loader.dataset))
 
 def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
     fig, (ax1, ax2) = plt.subplots(1,2, figsize = (10,5))
