@@ -5,19 +5,19 @@ import seaborn as sns
 
 
 class HierarchicalShap:
-"""
-Explains the salient region of images for a given network.
-"""
+    """
+    Explains the salient region of images for a given network.
+    """
     def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type = "white",  background = None):
-      """
-      Parameters
-      ----------
-      model: the model from which you wish to study the decision
-      mean: the mean used for image normlization
-      sd: the standard deviation used for normalization
-      background_type: pre-defined background images. Can chose from {"white", "black"}
-      background: if you want  to use a specified background
-      """
+        """
+        Parameters
+        ----------
+        model: the model from which you wish to study the decision
+        mean: the mean used for image normlization
+        sd: the standard deviation used for normalization
+        background_type: pre-defined background images. Can chose from {"white", "black"}
+        background: if you want  to use a specified background
+        """
         self.model = model
         self.mean = mean
         self.sd = sd
