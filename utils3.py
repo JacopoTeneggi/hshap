@@ -118,6 +118,52 @@ def test(net, loader):
     print("Number of mistakes : " + str(total - correct))
     return wrong_im, wrong_label, wrongly_predicted_label
 
+
+def train(net, optimizer, criterion, max_epochs, dataloader, valloader, , epsilon):
+    converged = False
+    epsilon = 0.0001
+    train_loss, val_loss, train_accuracy, val_accuracy = [], [], [], []
+    for epoch in range(max_epochs):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        if not converged:
+            for i, data in enumerate(dataloader, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                inputs, labels = data
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+
+                loss.backward()
+                optimizer.step()
+
+                # plot loss
+                running_loss += loss.item()
+
+            train_loss.append(running_loss / len(dataloader.dataset))
+            train_accuracy.append(training_accuracy(net, dataloader))
+            A, L = validation_stats(net, valloader, criterion)
+            val_loss.append(L)
+            val_accuracy.append(A)
+
+            print('Generation %d. training loss: %.4f,'
+                  % (epoch + 1, train_loss[-1]), end="")
+            print(" training accuracy: %.2f " % (train_accuracy[-1]), end="%,")
+            print(" validation loss: %.4f," % (val_loss[-1]), end=" ")
+            print(" validation accuracy: %.2f " % (val_accuracy[-1]), end="% \n")
+
+            converged = network_has_converged(train_loss, epsilon)
+
+    if (converged):
+        print("Network has converged.")
+    else:
+        print("Network hasn't been able to converge in " + str(max_epochs) + " generations.")
+    return train_loss, val_loss, train_accuracy, val_accuracy
+
 class Net(nn.Module):
 
     def __init__(self):
