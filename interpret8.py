@@ -2,9 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import shap
-import os
-os.system("pip install pytorch-gradcam")
-from gradcam.visualize import visualize_cam
+from gradcam.utils import visualize_cam
 
 
 def display_gradients( image, gradients, figure_size=(6, 5)):
