@@ -3,6 +3,11 @@ import seaborn as sns
 import numpy as np
 import shap
 from gradcam.utils import visualize_cam
+import os
+os.system("wget https://raw.githubusercontent.com/yiskw713/SmoothGradCAMplusplus/master/utils/visualize.py -P local_modules -nc")
+import sys
+sys.path.append('local_modules')
+from local_modules.visualize import visualize
 
 
 def display_gradients( image, gradients, figure_size=(6, 5)):
@@ -63,3 +68,13 @@ def gradcam_exp(gradcam, gradcam_pp, inp, image, layer_name, f_size):
     fig.suptitle("With respect to %s" % layer_name, size="xx-large")
 
 
+def smooth_exp(inp, image, wrapped): 
+  fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(20,20))
+  titles = ["GradCAM","GradCAM++","SmoothGradCAM++"]
+  for i in range(len(wrapped)):
+    cam, idx = wrapped[i](inp)
+    heatmap = visualize(image.unsqueeze(0), cam)
+    hm = (heatmap.squeeze().detach().numpy().transpose(1, 2, 0))
+    ax[0][i].imshow(cam.squeeze().numpy(), alpha=0.5, cmap='jet')
+    ax[1][i].imshow(hm)
+    ax[1][i].set_title(titles[i])
