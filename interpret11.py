@@ -49,20 +49,17 @@ def gradcam_exp(gradcam, gradcam_pp, inp, image, layer_name, f_size):
     display_gradients(heatmap.detach().numpy(), f_size).suptitle("Grad-CAM for an image with label 0", size="xx-large")
     display_gradients(heatmap_pp.detach().numpy(), f_size).suptitle("Grad-CAM++ for an image with label 0", size="xx-large")
 
-    heatmap_show = np.swapaxes(np.swapaxes(heatmap, 0, 1), 1, 2)
-    heatmap_pp_show = np.swapaxes(np.swapaxes(heatmap_pp, 0, 1), 1, 2)
+    #heatmap_show = np.swapaxes(np.swapaxes(heatmap, 0, 1), 1, 2)
+    #heatmap_pp_show = np.swapaxes(np.swapaxes(heatmap_pp, 0, 1), 1, 2)
     result_show = np.swapaxes(np.swapaxes(result.detach(), 0, 1), 1, 2)
     result_pp_show = np.swapaxes(np.swapaxes(result_pp.detach(), 0, 1), 1, 2)
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(2*f_size[0], 2*f_size[1]))
-    ax1.imshow(heatmap_show)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(2*f_size[0], f_size[1]))
+
+    ax1.imshow(result_show)
     ax1.set_title("With GradCAM")
-    ax2.imshow(result_show)
-    ax2.set_title("With GradCAM")
-    ax3.imshow(heatmap_pp_show)
-    ax3.set_title("With GradCAM++")
-    ax4.imshow(result_pp_show)
-    ax4.set_title("With GradCAM++")
+    ax2.imshow(result_pp_show)
+    ax2.set_title("With GradCAM++")
     fig.suptitle("With respect to %s" % layer_name, size="xx-large")
 
 
