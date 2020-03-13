@@ -10,13 +10,11 @@ sys.path.append('local_modules')
 from local_modules.visualize import visualize
 
 
-def display_gradients( image, gradients, figure_size=(6, 5)):
-    fig = plt.figure(figsize=(4*figure_size[0]*1.2, figure_size[1]))
-    ax0 = fig.add_subplot(141, title="Input image")
-    ax1 = fig.add_subplot(142, title="Gradient in the red channel")
-    ax2 = fig.add_subplot(143, title="Gradient in the green channel")
-    ax3 = fig.add_subplot(144, title="Gradient in the blue channel")
-    ax0.imshow(image)
+def display_gradients(gradients, figure_size=(6, 5)):
+    fig = plt.figure(figsize=(3*figure_size[0], figure_size[1]))
+    ax1 = fig.add_subplot(131, title="Gradient in the red channel")
+    ax2 = fig.add_subplot(132, title="Gradient in the green channel")
+    ax3 = fig.add_subplot(133, title="Gradient in the blue channel")
     _ = sns.heatmap(gradients[0], cmap="Reds", ax=ax1)
     _ = sns.heatmap(gradients[1], cmap="Greens", ax=ax2)
     _ = sns.heatmap(gradients[2], cmap="Blues", ax=ax3)
@@ -48,15 +46,15 @@ def gradcam_exp(gradcam, gradcam_pp, inp, image, layer_name, f_size):
     heatmap, result = visualize_cam(mask, inp)
     mask_pp, _ = gradcam_pp(inp)
     heatmap_pp, result_pp = visualize_cam(mask_pp, inp)
-    display_gradients(image, heatmap.detach().numpy()).suptitle("Grad-CAM for an image with label 0", size="xx-large")
-    display_gradients(image, heatmap_pp.detach().numpy()).suptitle("Grad-CAM++ for an image with label 0", size="xx-large")
+    display_gradients(heatmap.detach().numpy(), f_size).suptitle("Grad-CAM for an image with label 0", size="xx-large")
+    display_gradients(heatmap_pp.detach().numpy(), f_size).suptitle("Grad-CAM++ for an image with label 0", size="xx-large")
 
     heatmap_show = np.swapaxes(np.swapaxes(heatmap, 0, 1), 1, 2)
     heatmap_pp_show = np.swapaxes(np.swapaxes(heatmap_pp, 0, 1), 1, 2)
     result_show = np.swapaxes(np.swapaxes(result.detach(), 0, 1), 1, 2)
     result_pp_show = np.swapaxes(np.swapaxes(result_pp.detach(), 0, 1), 1, 2)
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=f_size)
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(2*f_size[0], 2*f_size[1]))
     ax1.imshow(heatmap_show)
     ax1.set_title("With GradCAM")
     ax2.imshow(result_show)
