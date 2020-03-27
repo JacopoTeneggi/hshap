@@ -37,6 +37,7 @@ class HierarchicalShap:
 
     def construct_subsets(self, im, start=(0, 0), region_size=(None, None)):
         if (region_size[0] == None or region_size[1] == None):
+            start = (0, 0)
             region_size = im.numpy().shape[1:3]
 
         middle = (start[0] + region_size[0]//2, start[1] + region_size[1]//2)
@@ -208,7 +209,7 @@ class HierarchicalShap:
             self.display_cropped_images(images_final, score)
             f = plt.figure()
             sns.heatmap(sm)
-            f.title("Shap values of each quadrant");
+            f.set_title("Shap values of each quadrant");
 
         quad = (int(rgs[0] / 2), int(rgs[1] / 2))
         srs = self.get_salient_regions(sm, strt, quad, shapTol)
