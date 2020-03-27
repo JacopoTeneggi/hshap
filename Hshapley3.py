@@ -8,7 +8,7 @@ class HierarchicalShap:
     """
     Explains the salient region of images for a given network.
     """
-    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type = "white",  background = None, debug = False):
+    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type = "white",  background = None):
         """
         Parameters
         ----------
@@ -214,13 +214,13 @@ class HierarchicalShap:
         srs = self.get_salient_regions(sm, strt, quad, shapTol)
         return srs
 
-    def shapMap(self, image, label, shapTol=[6], keepItSimple=False):
+    def shapMap(self, image, label, shapTol=[6], keepItSimple=False, debug=False):
         ls = []
         delta = [image.shape[1]//20, image.shape[2]//24]
         xf = [image.shape[1], image.shape[2]]
         starts = [(0, 0), (0, delta[1]), (0, 2 * delta[1]), (delta[0], 0), (2 * delta[0], 0), (delta[0], 2 * delta[1]),
                   (2 * delta[0], delta[1]), (delta[0], delta[1]), (2 * delta[0], 2 * delta[1])]
-        ends = [(xf[0], xf[1] - delta[1]), (xf[0], xf[1] - 2 * delta[1]), (xf[0] - delta[0], xf[1]),
+        ends = [(xf[0], xf[1]), (xf[0], xf[1] - delta[1]), (xf[0], xf[1] - 2 * delta[1]), (xf[0] - delta[0], xf[1]),
                 (xf[0] - 2 * delta[0], xf[1]), (xf[0] - delta[0], xf[1] - 2 * delta[1]),
                 (xf[0] - 2 * delta[0], xf[1] - delta[1]), (xf[0] - delta[0], xf[1] - delta[1]),
                 (xf[0] - 2 * delta[0], xf[1] - 2 * delta[1])]
@@ -236,7 +236,7 @@ class HierarchicalShap:
                     while (len(srs) > 0):
                         all = []
                         for sr in srs:
-                            s = self.do_all(image, label, sr[0], sr[1], tol)
+                            s = self.do_all(image, label, sr[0], sr[1], tol, debug)
                             if (s == []):
                                 finished.append(((sr[0]), (sr[1])))
                             else:
