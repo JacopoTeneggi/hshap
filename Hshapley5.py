@@ -209,7 +209,7 @@ class HierarchicalShap:
             self.display_cropped_images(images_final, score)
             f = plt.figure()
             sns.heatmap(sm)
-            f.set_title("Shap values of each quadrant");
+            f.suptitle("Shap values of each quadrant");
 
         quad = (int(rgs[0] / 2), int(rgs[1] / 2))
         srs = self.get_salient_regions(sm, strt, quad, shapTol)
