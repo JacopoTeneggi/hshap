@@ -43,7 +43,13 @@ class HierarchicalShap:
         middle = (start[0] + region_size[0]//2, start[1] + region_size[1]//2)
         end = (start[0] + region_size[0], start[1] + region_size[1])
 
-        print(end, im.shape)
+
+        top_left = (start, (middle[0] - start[0], middle[1] - start[1]))
+        top_right = ((start[0], middle[1]), (middle[0]-start[0], end[1]-middle[1]))
+        bottom_left = ((middle[0], start[1]), (end[0]-middle[0], middle[1]-start[1]))
+        bottom_right = (middle, (end[0]-middle[0], end[1]-middle[1]))
+        regions = np.array([[top_left, top_right],[bottom_left, bottom_right]])
+
 
         subsets_size = [16]
         image_size = []
@@ -119,7 +125,7 @@ class HierarchicalShap:
         subsets[14] = im1
         subsets[15] = im_
 
-        return subsets
+        return subsets, regions
 
     def subsetScores(self, sub, label):
         outputs = self.model(sub)
@@ -144,31 +150,36 @@ class HierarchicalShap:
         return score
 
     def constructShapMap(self, score):
-        phi1 = (score[14] - score[15]) / 4 + (
-                    score[8] - score[11] + score[9] - score[12] + score[10] - score[13]) / 12 + (
-                       score[2] - score[5] + score[3] - score[6] + score[4] - score[7]) / 12 + (score[0] - score[1]) / 4
-        phi2 = (score[13] - score[15]) / 4 + (
-                    score[6] - score[11] + score[7] - score[12] + score[10] - score[14]) / 12 + (
-                       score[1] - score[5] + score[3] - score[8] + score[4] - score[9]) / 12 + (score[0] - score[2]) / 4
-        phi3 = (score[12] - score[15]) / 4 + (
-                    score[5] - score[11] + score[9] - score[12] + score[7] - score[13]) / 12 + (
-                       score[2] - score[8] + score[1] - score[6] + score[4] - score[10]) / 12 + (
-                           score[0] - score[3]) / 4
-        phi4 = (score[11] - score[15]) / 4 + (
-                    score[6] - score[14] + score[5] - score[12] + score[6] - score[13]) / 12 + (
-                       score[1] - score[9] + score[3] - score[10] + score[1] - score[9]) / 12 + (
-                           score[0] - score[4]) / 4
+        phi1 = (score[14] - score[15] + score[0] - score[1]) / 4 \
+               + (score[8] - score[11] + score[9] - score[12] + score[10] - score[13]
+                  + score[2] - score[5] + score[3] - score[6] + score[4] - score[7]) / 12
+        # verified
+
+        phi2 = (score[13] - score[15] + score[0] - score[2]) / 4 \
+               + (score[6] - score[11] + score[7] - score[12] + score[10] - score[14]
+                  + score[1] - score[5] + score[3] - score[8] + score[4] - score[9]) / 12
+        # verified
+
+
+        phi3 = (score[12] - score[15] + score[0] - score[3]) / 4 \
+               + (score[5] - score[11] + score[9] - score[14] + score[7] - score[13]
+                  + score[2] - score[8] + score[1] - score[6] + score[4] - score[10]) / 12
+        # verified
+
+        phi4 = (score[11] - score[15] + score[0] - score[4]) / 4 \
+               + (score[8] - score[14] + score[5] - score[12] + score[6] - score[13]
+                  + score[1] - score[7] + score[3] - score[10] + score[2] - score[9]) / 12
+        # verified
+
         shap_map = np.array([[phi1, phi2], [phi3, phi4]])
         return shap_map
 
-    def get_salient_regions(self, shap_map, start, quadrant_size, shapTol):
+    def get_salient_regions(self, shap_map, shapTol, regions):
         srs = []
         for i in range(len(shap_map)):
             for j in range(len(shap_map)):
                 if (shap_map[i, j] > shapTol):
-                    x = start[0] + i * quadrant_size[0]
-                    y = start[1] + j * quadrant_size[1]
-                    srs.append(((x, y), quadrant_size))
+                    srs.append(regions[i,j])
         return srs
 
     def display_salient(self, im, srs_coll):
@@ -201,8 +212,9 @@ class HierarchicalShap:
         ax3.set_xlim([0, im.shape[2]])
         ax3.set_ylim([im.shape[1], 0])
 
-    def do_all(self, im, label, strt, rgs, shapTol, debug=False):
-        images_final = self.construct_subsets(im, strt, rgs)
+    def do_all(self, im, label, strt, region_size, shapTol, debug=False):
+
+        images_final, regions = self.construct_subsets(im, strt, region_size)
         score = self.subsetScores(images_final, label)
         sm = self.constructShapMap(score)
         if (debug):
@@ -211,8 +223,8 @@ class HierarchicalShap:
             sns.heatmap(sm)
             f.suptitle("Shap values of each quadrant");
 
-        quad = (int(rgs[0] / 2), int(rgs[1] / 2))
-        srs = self.get_salient_regions(sm, strt, quad, shapTol)
+        srs = self.get_salient_regions(sm, shapTol, regions)
+
         return srs
 
     def shapMap(self, image, label, shapTol=[6], keepItSimple=False, debug=False):
@@ -230,8 +242,9 @@ class HierarchicalShap:
             ends = [(100, 120)]
         for start in starts:
             for end in ends:
+                size = (end[0]-start[0], end[1]-start[1])
                 for tol in shapTol:
-                    srs = [(start, end)]
+                    srs = [(start, size)]
                     finished = []
                     k = 0
                     while (len(srs) > 0):
