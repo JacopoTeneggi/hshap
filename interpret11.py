@@ -49,8 +49,8 @@ def gradcam_exp(gradcam, gradcam_pp, inp, image, layer_name, f_size):
     display_gradients(heatmap.detach().numpy(), f_size).suptitle("Grad-CAM for an image with label 0", size="xx-large")
     display_gradients(heatmap_pp.detach().numpy(), f_size).suptitle("Grad-CAM++ for an image with label 0", size="xx-large")
 
-    #heatmap_show = np.swapaxes(np.swapaxes(heatmap, 0, 1), 1, 2)
-    #heatmap_pp_show = np.swapaxes(np.swapaxes(heatmap_pp, 0, 1), 1, 2)
+    # heatmap_show = np.swapaxes(np.swapaxes(heatmap, 0, 1), 1, 2)
+    # heatmap_pp_show = np.swapaxes(np.swapaxes(heatmap_pp, 0, 1), 1, 2)
     result_show = np.swapaxes(np.swapaxes(result.detach(), 0, 1), 1, 2)
     result_pp_show = np.swapaxes(np.swapaxes(result_pp.detach(), 0, 1), 1, 2)
 
