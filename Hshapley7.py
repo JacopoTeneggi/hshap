@@ -186,31 +186,30 @@ class HierarchicalShap:
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
         sample_image = im.numpy().transpose(1, 2, 0)
         image = sample_image * self.sd + self.mean
-        n_points = 101
         ax1.imshow(image)
         ax2.imshow(image)
-        ax3.imshow(image)
+        mask = np.zeros(image.shape)
+
         for srs in srs_coll:
             for sr in srs:
                 start = sr[0]
-                quadrant_size = sr[1]
-                ax2.plot(np.linspace(start[1], start[1] + quadrant_size[1], n_points), start[0] * np.ones(n_points),
-                         'r')
-                ax2.plot(np.linspace(start[1], start[1] + quadrant_size[1], n_points),
-                         (start[0] + quadrant_size[0]) * np.ones(n_points), 'r')
-                ax2.plot(start[1] * np.ones(n_points), np.linspace(start[0], start[0] + quadrant_size[0], n_points),
-                         'r')
-                ax2.plot((start[1] + quadrant_size[1]) * np.ones(n_points),
-                         np.linspace(start[0], start[0] + quadrant_size[0], n_points), 'r')
-                xs = [start[1], start[1] + quadrant_size[1], start[1] + quadrant_size[1], start[1]]
-                ys = [start[0], start[0], start[0] + quadrant_size[0], start[0] + quadrant_size[0]]
-                ax3.fill(xs, ys, 'r', alpha=1 / len(srs_coll))
+                q_size = sr[1]
+
+                xs = [start[1], start[1] + q_size[1], start[1] + q_size[1], start[1]]
+                ys = [start[0], start[0], start[0] + q_size[0], start[0] + q_size[0]]
+                ax2.fill(xs, ys, 'r', alpha=1 / len(srs_coll))
+                mask[start[0]:start[0]+q_size[0], start[1]:start[1]+q_size[1]] += np.ones((q_size[0], q_size[1], 3))
+        # Normalize the mask to the range (0,1)
+        mask /= np.max(mask)
+        # Set to 0 elements smaller than 1/10
+        negligible = (mask < 0.1)
+        mask[negligible] = 0
+
         ax1.set_xlim([0, im.shape[2]])
         ax1.set_ylim([im.shape[1], 0])
         ax2.set_xlim([0, im.shape[2]])
         ax2.set_ylim([im.shape[1], 0])
-        ax3.set_xlim([0, im.shape[2]])
-        ax3.set_ylim([im.shape[1], 0])
+        ax3.imshow(image*mask)
 
     def do_all(self, im, label, strt, region_size, shapTol, debug=False):
 
