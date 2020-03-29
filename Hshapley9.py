@@ -9,13 +9,13 @@ class HierarchicalShap:
     Explains the salient region of images for a given network.
     """
 
-    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type="white",
+    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type="custom",
                  background=None):
         """
         Parameters
         ----------
         model: the model from which you wish to study the decision
-        mean: the mean used for image normlization
+        mean: the mean used for image normalization
         sd: the standard deviation used for normalization
         background_type: pre-defined background images. Can chose from {"white", "black"}
         background: if you want  to use a specified background
@@ -23,8 +23,19 @@ class HierarchicalShap:
         self.model = model
         self.mean = mean
         self.sd = sd
-        self.background = background
-        self.background_type = background_type
+
+        if (background_type == "custom" ):
+            if (background == None):
+                raise ValueError("Must either provide a custom background, or chose from {white, black}")
+            else:
+                self.background = background
+        else if (background_type == "white"):
+            self.background = torch.ones(image_size)
+        else if (background_type == "black"):
+            self.background = torch.zeros(image_size)
+        else:
+            raise ValueError("Unknown background type")
+
 
     def display_cropped_images(self, images, score):
         mean = np.array([0.5, 0.5, 0.5])
@@ -58,17 +69,6 @@ class HierarchicalShap:
             image_size.append(dim)
         subsets = torch.zeros(subsets_size)
 
-        if (self.background == None):
-            if (self.background_type == "white"):
-                bg = torch.ones(image_size)
-            else:
-                NameError("Unknown background type. Choose white or give a specified background.")
-        else:
-            print(self.background)
-            figure(), imshow(self.background)
-            bg = self.background[:, start[0]:start[0] + region_size[0], start[1]:start[1] + region_size[1]]
-            print(bg)
-            figure(), imshow(bg)
 
         # removing 0 features
         im1234 = bg.clone()
