@@ -29,9 +29,9 @@ class HierarchicalShap:
                 raise ValueError("Must either provide a custom background, or chose from {white, black}")
             else:
                 self.background = background
-        else if (background_type == "white"):
+        elif (background_type == "white"):
             self.background = torch.ones(image_size)
-        else if (background_type == "black"):
+        elif (background_type == "black"):
             self.background = torch.zeros(image_size)
         else:
             raise ValueError("Unknown background type")
