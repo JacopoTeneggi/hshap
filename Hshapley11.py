@@ -9,8 +9,7 @@ class HierarchicalShap:
     Explains the salient region of images for a given network.
     """
 
-    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type="custom",
-                 background=None):
+    def __init__(self, model, background, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5])):
         """
         Parameters
         ----------
@@ -24,17 +23,7 @@ class HierarchicalShap:
         self.mean = mean
         self.sd = sd
 
-        if (background_type == "custom" ):
-            if (background == None):
-                raise ValueError("Must either provide a custom background, or chose from {white, black}")
-            else:
-                self.background = background
-        elif (background_type == "white"):
-            self.background = torch.ones(image_size)
-        elif (background_type == "black"):
-            self.background = torch.zeros(image_size)
-        else:
-            raise ValueError("Unknown background type")
+        self.background = background
 
 
     def display_cropped_images(self, images, score):
