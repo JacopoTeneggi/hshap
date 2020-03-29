@@ -58,7 +58,7 @@ class HierarchicalShap:
             image_size.append(dim)
         subsets = torch.zeros(subsets_size)
 
-
+        bg = self.background
         # removing 0 features
         im1234 = bg.clone()
         im1234[:, start[0]:end[0], start[1]:end[1]] = im[:, start[0]:end[0], start[1]:end[1]]
@@ -94,7 +94,7 @@ class HierarchicalShap:
         im1 = im14.clone()
         im1[:, middle[0]:end[0], middle[1]:end[1]] = bg[:, middle[0]:end[0], middle[1]:end[1]]
         # removing 4
-        im_ = bg
+        im_ = bg.clone()
 
         subsets[0] = im1234
         subsets[1] = im234
