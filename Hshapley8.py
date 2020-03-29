@@ -8,7 +8,9 @@ class HierarchicalShap:
     """
     Explains the salient region of images for a given network.
     """
-    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type = "white",  background = None):
+
+    def __init__(self, model, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5]), background_type="white",
+                 background=None):
         """
         Parameters
         ----------
@@ -40,16 +42,14 @@ class HierarchicalShap:
             start = (0, 0)
             region_size = im.numpy().shape[1:3]
 
-        middle = (start[0] + region_size[0]//2, start[1] + region_size[1]//2)
+        middle = (start[0] + region_size[0] // 2, start[1] + region_size[1] // 2)
         end = (start[0] + region_size[0], start[1] + region_size[1])
 
-
         top_left = (start, (middle[0] - start[0], middle[1] - start[1]))
-        top_right = ((start[0], middle[1]), (middle[0]-start[0], end[1]-middle[1]))
-        bottom_left = ((middle[0], start[1]), (end[0]-middle[0], middle[1]-start[1]))
-        bottom_right = (middle, (end[0]-middle[0], end[1]-middle[1]))
-        regions = np.array([[top_left, top_right],[bottom_left, bottom_right]])
-
+        top_right = ((start[0], middle[1]), (middle[0] - start[0], end[1] - middle[1]))
+        bottom_left = ((middle[0], start[1]), (end[0] - middle[0], middle[1] - start[1]))
+        bottom_right = (middle, (end[0] - middle[0], end[1] - middle[1]))
+        regions = np.array([[top_left, top_right], [bottom_left, bottom_right]])
 
         subsets_size = [16]
         image_size = []
@@ -57,7 +57,6 @@ class HierarchicalShap:
             subsets_size.append(dim)
             image_size.append(dim)
         subsets = torch.zeros(subsets_size)
-
 
         if (self.background == None):
             if (self.background_type == "white"):
@@ -160,7 +159,6 @@ class HierarchicalShap:
                   + score[1] - score[5] + score[3] - score[8] + score[4] - score[9]) / 12
         # verified
 
-
         phi3 = (score[12] - score[15] + score[0] - score[3]) / 4 \
                + (score[5] - score[11] + score[9] - score[14] + score[7] - score[13]
                   + score[2] - score[8] + score[1] - score[6] + score[4] - score[10]) / 12
@@ -179,7 +177,7 @@ class HierarchicalShap:
         for i in range(len(shap_map)):
             for j in range(len(shap_map)):
                 if (shap_map[i, j] > shapTol):
-                    srs.append(regions[i,j])
+                    srs.append(regions[i, j])
         return srs
 
     def display_salient(self, im, srs_coll):
@@ -198,7 +196,7 @@ class HierarchicalShap:
                 xs = [start[1], start[1] + q_size[1], start[1] + q_size[1], start[1]]
                 ys = [start[0], start[0], start[0] + q_size[0], start[0] + q_size[0]]
                 ax2.fill(xs, ys, 'r', alpha=1 / len(srs_coll))
-                mask[start[0]:start[0]+q_size[0], start[1]:start[1]+q_size[1]] += np.ones((q_size[0], q_size[1], 3))
+                mask[start[0]:start[0] + q_size[0], start[1]:start[1] + q_size[1]] += np.ones((q_size[0], q_size[1], 3))
         # Normalize the mask to the range (0,1)
         mask /= np.max(mask)
         # Set to 0 elements smaller than 1/10
@@ -209,7 +207,7 @@ class HierarchicalShap:
         ax1.set_ylim([im.shape[1], 0])
         ax2.set_xlim([0, im.shape[2]])
         ax2.set_ylim([im.shape[1], 0])
-        ax3.imshow(image*mask)
+        ax3.imshow(image * mask)
 
     def do_all(self, im, label, strt, region_size, shapTol, debug=False):
 
@@ -227,8 +225,9 @@ class HierarchicalShap:
         return srs
 
     def shapMap(self, image, label, shapTol=[6], keepItSimple=False, debug=False):
+        max_depth = 20
         ls = []
-        delta = [image.shape[1]//20, image.shape[2]//24]
+        delta = [image.shape[1] // 20, image.shape[2] // 24]
         xf = [image.shape[1], image.shape[2]]
         starts = [(0, 0), (0, delta[1]), (0, 2 * delta[1]), (delta[0], 0), (2 * delta[0], 0), (delta[0], 2 * delta[1]),
                   (2 * delta[0], delta[1]), (delta[0], delta[1]), (2 * delta[0], 2 * delta[1])]
@@ -239,22 +238,29 @@ class HierarchicalShap:
         if (keepItSimple):
             starts = [(0, 0)]
             ends = [(100, 120)]
-        for start in starts:
-            for end in ends:
-                size = (end[0]-start[0], end[1]-start[1])
-                for tol in shapTol:
-                    srs = [(start, size)]
-                    finished = []
-                    k = 0
-                    while (len(srs) > 0):
-                        all = []
-                        for sr in srs:
-                            s = self.do_all(image, label, sr[0], sr[1], tol, debug)
-                            if (s == []):
-                                finished.append(((sr[0]), (sr[1])))
-                            else:
-                                all += s
-                        srs = all
-                        k += 1
-                    ls.append(finished)
+
+        for tol in shapTol:
+            try:
+                for start in starts:
+                    for end in ends:
+                        size = (end[0] - start[0], end[1] - start[1])
+                        srs = [(start, size)]
+                        finished = []
+                        k = 0
+                        while (len(srs) > 0):
+                            if (k > max_depth):
+                                raise RuntimeError("Depth %d reached at tolereance %f" % (k, tol))
+                            all_ = []
+                            for sr in srs:
+                                s = self.do_all(image, label, sr[0], sr[1], tol, debug)
+                                if (s == []):
+                                    finished.append(((sr[0]), (sr[1])))
+                                else:
+                                    all_ += s
+                            srs = all_
+                            k += 1
+                        ls.append(finished)
+            except RuntimeError as w:
+                print(w, "Run ignored, consider increasing tolerance.")
+
         self.display_salient(image, ls)
