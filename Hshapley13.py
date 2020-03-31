@@ -226,7 +226,7 @@ class HierarchicalShap:
                 (xf[0] - 2 * delta[0], xf[1] - 2 * delta[1])]
         if (keepItSimple):
             starts = [(0, 0)]
-            ends = [(100, 120)]
+            ends = [(xf[0], xf[1])]
 
         for tol in shapTol:
             try:
