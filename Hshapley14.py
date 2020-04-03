@@ -169,7 +169,7 @@ class HierarchicalShap:
         return srs
 
     def display_salient(self, im, srs_coll, count):
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(45, 30))
         sample_image = im.numpy().transpose(1, 2, 0)
         count = count.transpose(1, 2, 0)
         image = sample_image * self.sd + self.mean
