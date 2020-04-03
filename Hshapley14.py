@@ -25,7 +25,6 @@ class HierarchicalShap:
 
         self.background = background
 
-
     def display_cropped_images(self, images, score):
         mean = np.array([0.5, 0.5, 0.5])
         sd = np.array([0.5, 0.5, 0.5])
@@ -169,9 +168,10 @@ class HierarchicalShap:
                     srs.append(regions[i, j])
         return srs
 
-    def display_salient(self, im, srs_coll):
+    def display_salient(self, im, srs_coll, count):
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
         sample_image = im.numpy().transpose(1, 2, 0)
+        count = count.transpose(1, 2, 0)
         image = sample_image * self.sd + self.mean
         ax1.imshow(image)
         ax2.imshow(image)
@@ -185,7 +185,11 @@ class HierarchicalShap:
                 xs = [start[1], start[1] + q_size[1], start[1] + q_size[1], start[1]]
                 ys = [start[0], start[0], start[0] + q_size[0], start[0] + q_size[0]]
                 ax2.fill(xs, ys, 'r', alpha=1 / len(srs_coll))
-                mask[start[0]:start[0] + q_size[0], start[1]:start[1] + q_size[1]] += np.ones((q_size[0], q_size[1], 3))
+                mask[start[0]:start[0] + q_size[0], start[1]:start[1] + q_size[1], :] += np.ones(
+                    (q_size[0], q_size[1], 3))
+
+        # Normalize the mask by the number of tries in each region
+        mask /= count
         # Normalize the mask to the range (0,1)
         mask /= np.max(mask)
         # Set to 0 elements smaller than 1/10
@@ -218,20 +222,25 @@ class HierarchicalShap:
         ls = []
         delta = [image.shape[1] // 20, image.shape[2] // 24]
         xf = [image.shape[1], image.shape[2]]
-        starts = [(0, 0), (0, delta[1]), (0, 2 * delta[1]), (delta[0], 0), (2 * delta[0], 0), (delta[0], 2 * delta[1]),
-                  (2 * delta[0], delta[1]), (delta[0], delta[1]), (2 * delta[0], 2 * delta[1])]
-        ends = [(xf[0], xf[1]), (xf[0], xf[1] - delta[1]), (xf[0], xf[1] - 2 * delta[1]), (xf[0] - delta[0], xf[1]),
-                (xf[0] - 2 * delta[0], xf[1]), (xf[0] - delta[0], xf[1] - 2 * delta[1]),
-                (xf[0] - 2 * delta[0], xf[1] - delta[1]), (xf[0] - delta[0], xf[1] - delta[1]),
-                (xf[0] - 2 * delta[0], xf[1] - 2 * delta[1])]
+        starts = [(0, 0), (0, delta[1]), (delta[0], 0), (delta[0], delta[1])]
+        ends = [(xf[0], xf[1]), (xf[0], xf[1] - delta[1]), (xf[0] - delta[0], xf[1]),
+                (xf[0] - delta[0], xf[1] - delta[1])]
+        count = np.zeros(image.shape)
+
         if (keepItSimple):
             starts = [(0, 0)]
             ends = [(xf[0], xf[1])]
+
+        for start in starts:
+            for end in ends:
+                size = (end[0] - start[0], end[1] - start[1])
+                count[:, start[0]:end[0], start[1]:end[1]] += np.ones((3, size[0], size[1]))
 
         for tol in shapTol:
             try:
                 for start in starts:
                     for end in ends:
+
                         size = (end[0] - start[0], end[1] - start[1])
                         srs = [(start, size)]
                         finished = []
@@ -252,4 +261,4 @@ class HierarchicalShap:
             except RuntimeError as w:
                 print(w, "Run ignored, consider increasing tolerance.")
 
-        self.display_salient(image, ls)
+        self.display_salient(image, ls, count)
