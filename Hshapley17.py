@@ -107,7 +107,7 @@ class HierarchicalShap:
         im13 = im134.clone()
         im13[:, m[0]:e[0], m[1]:e[1]] = bg[:, m[0]:e[0], m[1]:e[1]]
         im12 = im123.clone()
-        im12[:, m[0]:e[0], s[1]:m[1]] = bg[:, m[0]:e[0], start[1]:m[1]]
+        im12[:, m[0]:e[0], s[1]:m[1]] = bg[:, m[0]:e[0], s[1]:m[1]]
         # removing 3 features
         im4 = im34.clone()
         im4[:, m[0]:e[0], s[1]:m[1]] = bg[:, m[0]:e[0], s[1]:m[1]]
@@ -138,7 +138,7 @@ class HierarchicalShap:
         subsets[14] = im1
         subsets[15] = im_
 
-        return subsets, regions
+        return subsets, r_coord
 
     def subsetScores(self, sub, label):
         outputs = self.model(sub)
