@@ -72,7 +72,7 @@ class HierarchicalShap:
         top_left = (s, (m[0] - s[0], m[1] - s[1]))
         top_right = ((s[0], m[1]), (m[0] - s[0], e[1] - m[1]))
         bottom_left = ((m[0], s[1]), (e[0] - m[0], m[1] - s[1]))
-        bottom_right = (m, (end[0] - m[0], end[1] - m[1]))
+        bottom_right = (m, (e[0] - m[0], e[1] - m[1]))
         r_coord = np.array([[top_left, top_right], [bottom_left, bottom_right]])
 
         subsets_size = [16]
