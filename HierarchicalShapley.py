@@ -110,7 +110,7 @@ class HierarchicalShap:
         # removing 4
         im_ = bg.clone()
 
-        subsets = torch.tensor(subsets_size)
+        subsets = torch.zeros(size=subsets_size)
         subsets[0] = im1234
         subsets[1] = im234
         subsets[2] = im134
