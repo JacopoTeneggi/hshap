@@ -217,7 +217,7 @@ class HierarchicalShap:
                     srs.append(regions[i, j])
         return srs
 
-    def display_salient(self, im, srs_coll, count):
+    def display_salient(self, im, srs_coll, count, filename ):
         """
         Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
         Parameters
@@ -227,6 +227,8 @@ class HierarchicalShap:
         srs_coll : a collection of all regions deemed salient
 
         count : a normalizing mask which determines how many time each pixel was given a chance to be salient
+
+        filename : name of the file to save the figure to
         """
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(45, 30))
         sample_image = im.numpy().transpose(1, 2, 0)
@@ -261,6 +263,8 @@ class HierarchicalShap:
         ax2.set_xlim([0, im.shape[2]])
         ax2.set_ylim([im.shape[1], 0])
         ax3.imshow(image * mask)
+        if filename != None:
+            plt.savefig(filename, dpi=300)
 
     def do_all(self, im, label, start, region_size, tol, debug=False):
         """
@@ -293,7 +297,7 @@ class HierarchicalShap:
 
         return srs
 
-    def saliency_map(self, image, label, tolerance, only_one_run=False, debug=False, max_depth=30):
+    def saliency_map(self, image, label, tolerance, only_one_run=False, debug=False, max_depth=30, filename=None):
         """
         Create and then show a saliency map built with the Hierarchical Shapley method.
         ----------
@@ -308,6 +312,8 @@ class HierarchicalShap:
         debug : if True, all subsets, there associated scores and the Shapley values will be displayed
 
         max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
+
+        filename : name of the file to save the figure to
         """
         ls = []
         count = np.zeros(image.shape)
@@ -352,4 +358,4 @@ class HierarchicalShap:
             except RuntimeError as w:
                 print(w, "Run ignored, consider increasing tolerance.")
 
-        self.display_salient(image, ls, count)
+        self.display_salient(image, ls, count, filename)
