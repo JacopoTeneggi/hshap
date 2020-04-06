@@ -62,10 +62,6 @@ class HierarchicalShap:
                   second its size
         """
 
-        if (region_size[0] == None or region_size[1] == None):
-            s = (0, 0)
-            region_size = im.numpy().shape[1:3]
-
         m = (s[0] + region_size[0] // 2, s[1] + region_size[1] // 2)
         e = (s[0] + region_size[0], s[1] + region_size[1])
 
@@ -75,11 +71,7 @@ class HierarchicalShap:
         bottom_right = (m, (e[0] - m[0], e[1] - m[1]))
         r_coord = np.array([[top_left, top_right], [bottom_left, bottom_right]])
 
-        subsets_size = [16]
-        image_size = []
-        for dim in im.shape:
-            subsets_size.append(dim)
-            image_size.append(dim)
+        subsets_size = [16, im.shape[0], im.shape[1], im.shape[2]]
 
 
         bg = self.background
