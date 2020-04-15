@@ -1,9 +1,3 @@
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-
 class HierarchicalShap:
     """
     Explains the salient regions of images according a given network.
@@ -15,7 +9,6 @@ class HierarchicalShap:
         ----------
         model : the model from which you wish to study the decision
         background : used to remove the contribution of non-considered regions when constructing subsets
-
         mean : the mean used for image normalization (useful for plotting from input)
         sd : the standard deviation used for normalization (useful for plotting from input)
         """
@@ -30,7 +23,6 @@ class HierarchicalShap:
         Parameters
         ----------
         images : all the subsets to draw
-
         scores : the output score for a class 1
         """
         fig, axs = plt.subplots(4, 4, figsize=(15, 15))
@@ -48,15 +40,11 @@ class HierarchicalShap:
         Parameters
         ----------
         im : the image from which to extract subsets
-
         s : the top left pixel coordinates of the region analyzed, a tuple of
-
         region_size : the size of the region analyzed
-
         Returns
         --------
         subsets : the list of 16 images
-
         r_coord : a 2x2 array where each entry is a tuple of tuples; the first indicating the start
                   of the region and the second its size
         """
@@ -136,9 +124,7 @@ class HierarchicalShap:
         Parameters
         ----------
         sub : the subsets of inputs
-
         label : the class label - typically 1 -  in which we're interested.
-
         Returns
         --------
         score : an array of the 16 scores for each input
@@ -170,7 +156,6 @@ class HierarchicalShap:
         Parameters
         ----------
         score : the network evaluation for each subset
-
         Returns
         --------
         shapley_coefficients : an array of the 16 scores for each input
@@ -201,11 +186,8 @@ class HierarchicalShap:
         Parameters
         ----------
         shapley_values : the Shapley coefficients associated with each quadrant
-
         tol : the specified tolerance for a sub-region to be considered salient
-
         regions : the coordinates associated with each quadrant
-
         Returns
         --------
         srs : a list of the coordinates of the quadrants whose Shapley values were large enough
@@ -223,11 +205,8 @@ class HierarchicalShap:
         Parameters
         ----------
         im : the original image, in input format
-
         srs_coll : a collection of all regions deemed salient
-
         count : a normalizing mask which determines how many time each pixel was given a chance to be salient
-
         filename : name of the file to save the figure to
         """
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(45, 30))
@@ -265,21 +244,17 @@ class HierarchicalShap:
         ax3.imshow(image * mask)
         if filename != None:
             plt.savefig(filename, dpi=300)
+        return mask
 
     def do_all(self, im, label, start, region_size, tol, debug=False):
         """
         Secondary main loop: do everything for one region of the image.
         ----------
         im : the input image
-
         start : the starting coordinates of the region
-
         region_size : self-explanatory
-
         tol : the specified tolerance for a sub-region to be considered salient
-
         debug : if True, all subsets, there associated scores and the Shapley values will be displayed
-
         Returns
         --------
         srs : a list of the coordinates of the quadrants whose Shapley values were large enough
@@ -302,17 +277,11 @@ class HierarchicalShap:
         Create and then show a saliency map built with the Hierarchical Shapley method.
         ----------
         im : the input image
-
         label : the label with respect to which we want to analyze - typically 1
-
         tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
-
         only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
-
         debug : if True, all subsets, there associated scores and the Shapley values will be displayed
-
         max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
-
         filename : name of the file to save the figure to
         """
         ls = []
@@ -358,4 +327,4 @@ class HierarchicalShap:
             except RuntimeError as w:
                 print(w, "Run ignored, consider increasing tolerance.")
 
-        self.display_salient(image, ls, count, filename)
+        return self.display_salient(image, ls, count, filename)
