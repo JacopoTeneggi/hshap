@@ -195,3 +195,37 @@ class Net(nn.Module):
             num_features *= s
         return num_features
 
+
+class HdNet(nn.Module):
+    def __init__(self):
+        super(HdNet, self).__init__()
+        self.conv0 = nn.Conv2d(in_channels = 3, out_channels = 6, kernel_size = 5, stride=5)
+        self.pool0 = nn.MaxPool2d(kernel_size = 2, stride=2)
+        self.conv1 = nn.Conv2d(6, 10, 5)
+        self.pool1 = nn.MaxPool2d(2)
+        self.conv2 = nn.Conv2d(10, 16, 4)
+        self.pool2 = nn.MaxPool2d(5)
+        self.fc1 = nn.Linear(16 * 9 * 11, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 2)
+        self.drop = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        x = F.relu(self.conv0(x))
+        x = self.pool0(x)
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+        x = self.drop(F.relu(self.fc1(x)))
+        x = self.drop(F.relu(self.fc2(x)))
+        x = self.fc3(x)
+        return x
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
