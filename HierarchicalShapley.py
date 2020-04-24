@@ -136,24 +136,8 @@ class HierarchicalShap:
         score : an array of the 16 scores for each input
         """
         outputs = self.model(sub)
+        score = outputs[:, label].detach().numpy()
 
-        score = np.zeros(16)
-        score[0] = outputs[0, label]
-        score[1] = outputs[1, label]
-        score[2] = outputs[2, label]
-        score[3] = outputs[3, label]
-        score[4] = outputs[4, label]
-        score[5] = outputs[5, label]
-        score[6] = outputs[6, label]
-        score[7] = outputs[7, label]
-        score[8] = outputs[8, label]
-        score[9] = outputs[9, label]
-        score[10] = outputs[10, label]
-        score[11] = outputs[11, label]
-        score[12] = outputs[12, label]
-        score[13] = outputs[13, label]
-        score[14] = outputs[14, label]
-        score[15] = outputs[15, label]
         return score
 
     def shapley_of_quadrants(self, score):
@@ -167,7 +151,7 @@ class HierarchicalShap:
         shapley_coefficients : an array of the 16 scores for each input
         """
 
-        phi1 = (score[14] - score[15] + score[0] - score[1]) / 4 \
+        phi1 = (score[14] - score[15] + score[0] - score[1]) / 4\
                + (score[8] - score[11] + score[9] - score[12] + score[10] - score[13]
                   + score[2] - score[5] + score[3] - score[6] + score[4] - score[7]) / 12
 
@@ -203,9 +187,10 @@ class HierarchicalShap:
             for j in range(len(shapley_values[0])):
                 if shapley_values[i, j] > tol:
                     srs.append(regions[i, j])
+
         return srs
 
-    def display_salient(self, im, srs_coll, count, filename ):
+    def display_salient(self, im, srs_coll, count, filename):
         """
         Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
         Parameters
@@ -215,9 +200,11 @@ class HierarchicalShap:
         count : a normalizing mask which determines how many time each pixel was given a chance to be salient
         filename : name of the file to save the figure to
         """
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(45, 30))
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(60, 30))
+
         sample_image = im.numpy().transpose(1, 2, 0)
         count = count.transpose(1, 2, 0)
+        ax4.imshow(count / np.max(count))
         image = sample_image * self.sd + self.mean
         ax1.imshow(image)
         ax2.imshow(image)
@@ -228,10 +215,10 @@ class HierarchicalShap:
             for sr in srs:
                 start = sr[0]
                 q_size = sr[1]
-
                 xs = [start[1], start[1] + q_size[1], start[1] + q_size[1], start[1]]
                 ys = [start[0], start[0], start[0] + q_size[0], start[0] + q_size[0]]
                 ax2.fill(xs, ys, 'r', alpha=1 / len(srs_coll))
+
                 mask[start[0]:start[0] + q_size[0], start[1]:start[1] + q_size[1], :] += np.ones(
                     (q_size[0], q_size[1], 3))
 
@@ -240,7 +227,7 @@ class HierarchicalShap:
         # Normalize the mask to the range (0,1)
         mask /= np.max(mask)
         # Set to 0 elements smaller than 1/5
-        negligible = (mask < 0.2)
+        negligible = (mask < 1 / 5)
         mask[negligible] = 0
 
         ax1.set_xlim([0, im.shape[2]])
@@ -317,7 +304,9 @@ class HierarchicalShap:
                         srs = [(start, size)]
                         finished = []
                         k = 0
+
                         while len(srs) > 0:
+
                             if k > max_depth:
                                 raise RuntimeError("Depth %d reached at tolerance %f" % (k, tol))
                             all_ = []
@@ -325,6 +314,7 @@ class HierarchicalShap:
                                 s = self.do_all(image, label, sr[0], sr[1], tol, debug)
                                 if s == []:
                                     finished.append(((sr[0]), (sr[1])))
+
                                 else:
                                     all_ += s
                             srs = all_
@@ -334,3 +324,340 @@ class HierarchicalShap:
                 print(w, "Run ignored, consider increasing tolerance.")
 
         return self.display_salient(image, ls, count, filename)
+
+    def get_salient_regions_optim_tol(self, shapley_values, tols, regions):
+        """
+        Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        Parameters
+        ----------
+        shapley_values : the Shapley coefficients associated with each quadrant
+        tol : the specified tolerance for a sub-region to be considered salient
+        regions : the coordinates associated with each quadrant
+        Returns
+        --------
+        srs : a list of the coordinates of the quadrants whose Shapley values were large enough
+        """
+        srs = [[] for r in range(len(tols))]
+        for i in range(len(shapley_values)):
+            for j in range(len(shapley_values[0])):
+                for r in range(len(tols)):
+                    if shapley_values[i, j] > tols[r]:
+                        srs[r].append(regions[i, j])
+        return srs
+
+    def do_all_optim_tol(self, im, label, start, region_size, tols, debug=False):
+        """
+        Secondary main loop: do everything for one region of the image.
+        ----------
+        im : the input image
+        start : the starting coordinates of the region
+        region_size : self-explanatory
+        tol : the specified tolerance for a sub-region to be considered salient
+        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
+        Returns
+        --------
+        srs : a list of the coordinates of the quadrants whose Shapley values were large enough
+        """
+        images_final, regions = self.construct_subsets(im, start, region_size)
+        score = self.subset_scores(images_final, label)
+        sm = self.shapley_of_quadrants(score)
+        if debug:
+            self.display_cropped_images(images_final, score)
+            f = plt.figure()
+            sns.heatmap(sm)
+            f.suptitle("Shap values of each quadrant")
+
+        srs = self.get_salient_regions_optim_tol(sm, tols, regions)
+
+        return srs
+
+    def saliency_map_optim_tol(self, image, label, tolerance, only_one_run=False, debug=False, max_depth=30,
+                               filename=None):
+        """
+        Create and then show a saliency map built with the Hierarchical Shapley method.
+        ----------
+        im : the input image
+        label : the label with respect to which we want to analyze - typically 1
+        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
+        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : name of the file to save the figure to
+        """
+        ls = []
+        count = np.zeros(image.shape)
+        xf = [image.shape[1], image.shape[2]]
+
+        if only_one_run:
+            starts = [(0, 0)]
+            ends = [(xf[0], xf[1])]
+        else:
+            delta = [image.shape[1] // 20, image.shape[2] // 24]
+            starts = [(0, 0), (0, delta[1]), (delta[0], 0), (delta[0], delta[1])]
+            ends = [(xf[0], xf[1]), (xf[0], xf[1] - delta[1]), (xf[0] - delta[0], xf[1]),
+                    (xf[0] - delta[0], xf[1] - delta[1])]
+
+        for start in starts:
+            for end in ends:
+                size = (end[0] - start[0], end[1] - start[1])
+                count[:, start[0]:end[0], start[1]:end[1]] += np.ones((3, size[0], size[1]))
+
+        for start in starts:
+            for end in ends:
+
+                size = (end[0] - start[0], end[1] - start[1])
+                srs = [[(start, size)] for r in range(len(tolerance))]
+                finished = [[] for r in range(len(tolerance))]
+                was_finished = [True for r in range(len(tolerance))]
+                k = 0
+
+                while len(srs[0]) > 0 and k < max_depth:
+                    all_ = [[] for r in range(len(tolerance))]
+
+                    for sr in srs[0]:
+                        s = self.do_all_optim_tol(image, label, sr[0], sr[1], tolerance, debug)
+
+                        for r in range(len(tolerance)):
+                            if len(srs[r]) > 0:
+                                if s[r] == []:
+                                    finished[r].append(((sr[0]), (sr[1])))
+                                else:
+                                    all_[r] += s[r]
+
+                    for r in range(len(tolerance)):
+                        srs[r] = all_[r]
+
+                    k += 1
+
+                for r in range(len(tolerance)):
+                    if len(srs[r]) == 0:
+                        ls.append(finished[r])
+                    else:
+                        print("Max depth of %d reached at tolerance %.3f" % (max_depth, tolerance[r]))
+
+        return self.display_salient(image, ls, count, filename)
+
+    def saliency_map_optim_rand(self, image, label, tolerance, debug=False, max_depth=30, filename=None):
+        """
+        Create and then show a saliency map built with the Hierarchical Shapley method.
+        ----------
+        im : the input image
+        label : the label with respect to which we want to analyze - typically 1
+        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
+        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : name of the file to save the figure to
+        """
+        ls = []
+
+        xf = [image.shape[1], image.shape[2]]
+
+        start = (0, 0)
+        end = (xf[0], xf[1])
+        size = (end[0] - start[0], end[1] - start[1])
+        lx, ly = image.shape[1], image.shape[2]
+        dx, dy = image.shape[1] // 4, image.shape[2] // 4
+
+        def salient_regions(I, sx, sy):
+
+            finished = []
+
+            for tol in tolerance:
+                k = 0
+                srs = [(start, size)]
+                current = []
+                while len(srs) > 0 and k < max_depth:
+                    all_ = []
+                    for sr in srs:
+                        s = self.do_all(I, label, sr[0], sr[1], tol, debug)
+                        if s == []:
+                            coords = np.array([sr[0][0] + sx, sr[0][1] + sy])
+                            current.append((coords, sr[1]))
+                        else:
+                            all_ += s
+                    srs = all_
+                    k += 1
+                if (k < max_depth):
+                    finished += current
+            return finished
+
+        # normal
+        a = salient_regions(image, 0, 0)
+        ls.append(a)
+        count = np.ones(image.shape)
+
+        # shifted to bottom right
+        image_br = self.background.clone()
+        image_br[:, :lx - dx, :ly - dy] = image[:, dx:, dy:]
+        ls.append(salient_regions(image_br, dx, dy))
+        count[:, dx:, dy:] += np.ones((3, lx - dx, ly - dy))
+
+        # shifted to bottom left
+        image_bl = self.background.clone()
+        image_bl[:, :lx - dx, dy:] = image[:, dx:, :ly - dy]
+        ls.append(salient_regions(image_bl, dx, -dy))
+        count[:, dx:, :ly - dy] += np.ones((3, lx - dx, ly - dy))
+
+        # shifted to top left
+        image_tl = self.background.clone()
+        image_tl[:, dx:, dy:] = image[:, :lx - dx, :ly - dy]
+        ls.append(salient_regions(image_tl, -dx, -dy))
+        count[:, :lx - dx, :ly - dy] += np.ones((3, lx - dx, ly - dy))
+
+        # shifted to top right
+        image_tr = self.background.clone()
+        image_tr[:, dx:, :ly - dy] = image[:, :lx - dx, dy:]
+        ls.append(salient_regions(image_tr, -dx, dy))
+        count[:, :lx - dx, dy:] += np.ones((3, lx - dx, ly - dy))
+
+        return self.display_salient_optim_rand(image, ls, count, filename)
+
+    def display_salient_optim_rand(self, im, srs_coll, count, filename):
+        """
+        Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        Parameters
+        ----------
+        im : the original image, in input format
+        srs_coll : a collection of all regions deemed salient
+        count : a normalizing mask which determines how many time each pixel was given a chance to be salient
+        filename : name of the file to save the figure to
+        """
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(60, 30))
+
+        sample_image = im.numpy().transpose(1, 2, 0)
+        count = count.transpose(1, 2, 0)
+        ax4.imshow(count / np.max(count))
+        image = sample_image * self.sd + self.mean
+        ax1.imshow(image)
+        ax2.imshow(image)
+        mask = np.zeros(image.shape)
+
+        # Count how many time each pixel was found to be in a salient region
+        for srs in srs_coll:
+            for sr in srs:
+                start = sr[0]
+                q_size = sr[1]
+
+                if (start[0] >= 0 and start[0] + q_size[0] <= image.shape[0] and start[1] >= 0 and start[1] + q_size[
+                    1] <= image.shape[1]):
+                    xs = [start[1], start[1] + q_size[1], start[1] + q_size[1], start[1]]
+                    ys = [start[0], start[0], start[0] + q_size[0], start[0] + q_size[0]]
+                    ax2.fill(xs, ys, 'r', alpha=1 / len(srs_coll))
+
+                    mask[start[0]:start[0] + q_size[0], start[1]:start[1] + q_size[1], :] += np.ones(
+                        (q_size[0], q_size[1], 3))
+
+        # Normalize the mask by the number of tries in each region
+        mask /= count
+        # Normalize the mask to the range (0,1)
+        mask /= np.max(mask)
+        # Set to 0 elements smaller than 1/5
+        negligible = (mask < 1 / 5)
+        mask[negligible] = 0
+
+        ax1.set_xlim([0, im.shape[2]])
+        ax1.set_ylim([im.shape[1], 0])
+        ax2.set_xlim([0, im.shape[2]])
+        ax2.set_ylim([im.shape[1], 0])
+        ax3.imshow(image * mask)
+        if filename != None:
+            plt.savefig(filename, dpi=300)
+        return mask
+
+    def get_list_optim_tol(self, image, label, tolerance, sx, sy, debug=False, max_depth=30):
+
+        ls = []
+        xf = [image.shape[1], image.shape[2]]
+
+        start = (0, 0)
+        end = (xf[0], xf[1])
+
+        size = (end[0] - start[0], end[1] - start[1])
+        srs = [[(start, size)] for r in range(len(tolerance))]
+        finished = [[] for r in range(len(tolerance))]
+
+        k = 0
+
+        while len(srs[0]) > 0 and k < max_depth:
+            all_ = [[] for r in range(len(tolerance))]
+
+            for sr in srs[0]:
+                s = self.do_all_optim_tol(image, label, sr[0], sr[1], tolerance, debug)
+
+                for r in range(len(tolerance)):
+                    if len(srs[r]) > 0:
+                        if s[r] == []:
+                            coords = np.array([sr[0][0] + sx, sr[0][1] + sy])
+                            finished[r].append((coords, sr[1]))
+                        else:
+                            all_[r] += s[r]
+
+            for r in range(len(tolerance)):
+                srs[r] = all_[r]
+
+            k += 1
+
+        for r in range(len(tolerance)):
+            if len(srs[r]) == 0:
+                ls.extend(finished[r])
+            else:
+                print("Max depth of %d reached at tolerance %.3f" % (max_depth, tolerance[r]))
+
+        return ls
+
+    def saliency_map_optim_all(self, image, label, tolerance, debug=False, max_depth=30, filename=None):
+        """
+        Create and then show a saliency map built with the Hierarchical Shapley method.
+        ----------
+        im : the input image
+        label : the label with respect to which we want to analyze - typically 1
+        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
+        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : name of the file to save the figure to
+        """
+        ls = []
+
+        xf = [image.shape[1], image.shape[2]]
+
+        start = (0, 0)
+        end = (xf[0], xf[1])
+        size = (end[0] - start[0], end[1] - start[1])
+        lx, ly = image.shape[1], image.shape[2]
+        dx, dy = image.shape[1] // 4, image.shape[2] // 4
+
+        # normal
+        a = self.get_list_optim_tol(image, label, tolerance, 0, 0, debug=False, max_depth=30)
+        count = np.ones(image.shape)
+
+        # shifted to bottom right
+        image_br = self.background.clone()
+        image_br[:, :lx - dx, :ly - dy] = image[:, dx:, dy:]
+        a = self.get_list_optim_tol(image_br, label, tolerance, dx, dy, debug=False, max_depth=30)
+        ls.append(a)
+        count[:, dx:, dy:] += np.ones((3, lx - dx, ly - dy))
+
+        # shifted to bottom left
+        image_bl = self.background.clone()
+        image_bl[:, :lx - dx, dy:] = image[:, dx:, :ly - dy]
+        a = self.get_list_optim_tol(image_bl, label, tolerance, dx, -dy, debug=False, max_depth=30)
+        ls.append(a)
+        count[:, dx:, :ly - dy] += np.ones((3, lx - dx, ly - dy))
+
+        # shifted to top left
+        image_tl = self.background.clone()
+        image_tl[:, dx:, dy:] = image[:, :lx - dx, :ly - dy]
+        a = self.get_list_optim_tol(image_tl, label, tolerance, -dx, -dy, debug=False, max_depth=30)
+        ls.append(a)
+        count[:, :lx - dx, :ly - dy] += np.ones((3, lx - dx, ly - dy))
+
+        # shifted to top right
+        image_tr = self.background.clone()
+        image_tr[:, dx:, :ly - dy] = image[:, :lx - dx, dy:]
+        a = self.get_list_optim_tol(image_tr, label, tolerance, -dx, dy, debug=False, max_depth=30)
+        ls.append(a)
+        count[:, :lx - dx, dy:] += np.ones((3, lx - dx, ly - dy))
+
+        return self.display_salient_optim_rand(image, ls, count, filename)
