@@ -630,6 +630,7 @@ class HierarchicalShap:
 
         # normal
         a = self.get_list_optim_tol(image, label, tolerance, 0, 0, debug=False, max_depth=30)
+        ls.append(a)
         count = np.ones(image.shape)
 
         # shifted to bottom right
