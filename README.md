@@ -1,18 +1,8 @@
 # Interpretability
+This repo contains my work for a Biomedical Engineering Undergraduate Research course at Johns Hopkins University.
+## Aim 
+Study and compare various methods to produce saliency maps on a synthetic dataset. These methods are ueful in understanding what parts of an image are important for predictions made by a neural network. 
+Present a modified version of the SHAP method, which functions in a recursive and hierarchical manner to produce exact Shapley coefficients. 
 
-## How to work on this project: 
-1. open a command prompt
 
-2. go to project folder C:\Users\alexf\Interpretability
 
-3. git pull 
-
-4. jupyter lab 
-
-5. do some work 
-
-6. git add change_file.ipynb
-
-7. git commit -m "I did a lot of work today"
-
-8. git push
