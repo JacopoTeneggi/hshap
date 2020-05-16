@@ -7,6 +7,12 @@ Present a modified version of the SHAP method, which functions in a recursive an
 ### Generating 
 Contains a single ipynb, which can generate the desired dataset, which I would run on jupyter lab. 
 Once generated, you will have to upload the zip file to a drive account to go on with the training on colab. 
+There are 3 rules to chose from: 
+- 2: presence of a cross
+- 3: presence of a red triangle
+- 4: presence of a black circle and absence of crosses
+For rule 2, a csv file is also generated which contains the ground truth positions of the centers of the crosses within an image. This allows to judge the quality of the saliency maps created with SHAP and Hierarchical Shapley.
+
 ### Training 
 There are different ipynb, all on google colab, which correspond to the different datasets. 
 ### Interpreting 
