@@ -5,7 +5,7 @@ Study and compare various methods to produce saliency maps on a synthetic datase
 Present a modified version of the SHAP method, which functions in a recursive and hierarchical manner to produce exact Shapley coefficients. 
 ## Content 
 ### Generating 
-Contains a single ipynb, which can generate the desired dataset, which I would run on jupyter lab. 
+Contains an Ipython notebook to generate the desired dataset.
 Once generated, you will have to upload the zip file to a drive account to go on with the training on colab. 
 There are 3 rules to chose from: 
 - 2: presence of a cross
