@@ -6,31 +6,40 @@ import seaborn as sns
 
 class HierarchicalShap:
     """
-    Explains the salient regions of images according a given network.
+    Explains the salient regions of images according a given network using a hierarchical method based on Shapley values. 
     """
 
     def __init__(self, model, background, mean=np.array([0.5, 0.5, 0.5]), sd=np.array([0.5, 0.5, 0.5])):
-        """
+        """ Initialize the explanation model. 
+        
         Parameters
         ----------
-        model : the model from which you wish to study the decision
-        background : used to remove the contribution of non-considered regions when constructing subsets
-        mean : the mean used for image normalization (useful for plotting from input)
-        sd : the standard deviation used for normalization (useful for plotting from input)
+        model : a torch neural network (typically torch.nn.Module or a subclass of it)
+            the model whose decisions you wish to study
+        background : torch tensor 
+            used to remove the contribution of non-considered regions when constructing subsets
+        mean : array of shape (3,)
+            the mean of each channel in the dataset, used for image normalization (useful for plotting from input)
+        sd : array of shape (3,)
+            the standard deviation of each channel in the dataset, used for normalization (useful for plotting from input)
         """
+        
         self.model = model
         self.background = background
         self.mean = mean
         self.sd = sd
 
     def display_cropped_images(self, images, scores):
-        """
-        Draw the subsets.
+        """ Draw the subsets (images resulting from removing certain quadrants).
+        
         Parameters
         ----------
-        images : all the subsets to draw
-        scores : the output score for a class 1
+        images : torch tensor
+            all the subsets to draw
+        scores : numpy array of shape (16,)
+            the scores for each input
         """
+        
         fig, axs = plt.subplots(4, 4, figsize=(15, 15))
         for i in range(4):
             for j in range(4):
@@ -40,14 +49,18 @@ class HierarchicalShap:
                 axs[i, j].set_title("#%d score:%f " % (4 * i + j, scores[4 * i + j]))
 
     def construct_subsets(self, im, s=(0, 0), region_size=(None, None)):
-        """
-        Construct the subsets of im: all possible image resulting from removing from im the content of 0, 1, 2, 3
-        or all 4 quadrants of the region defined by start and region_size .
+        """ Construct the subsets of im: all possible image resulting from removing from im the content of 0, 1, 2, 3
+        or all 4 quadrants of the region defined by start and region_size.
+        
         Parameters
         ----------
-        im : the image from which to extract subsets
-        s : the top left pixel coordinates of the region analyzed, a tuple of
-        region_size : the size of the region analyzed
+        im : torch tensor 
+            the input image
+        s : tuple of ints
+            the top left pixel coordinates of the region analyzed
+        region_size : tuple of ints
+            the size of the region analyzed
+        
         Returns
         --------
         subsets : the list of 16 images
@@ -125,30 +138,35 @@ class HierarchicalShap:
         return subsets, r_coord
 
     def subset_scores(self, sub, label):
-        """
-        Compute the scores of each subset input.
+        """ Compute the scores of each subset input.
+        
         Parameters
         ----------
         sub : the subsets of inputs
         label : the class label - typically 1 -  in which we're interested.
+        
         Returns
         --------
-        score : an array of the 16 scores for each input
+        score : numpy array of shape (16,)
+            the scores for each input
         """
+        
         outputs = self.model(sub)
         score = outputs[:, label].detach().numpy()
 
         return score
 
     def shapley_of_quadrants(self, score):
-        """
-        Return a 2x2 array which contains the Shapley values associated with each quadrant
+        """ Compute the Shapley values associated with each quadrant.
+        
         Parameters
         ----------
         score : the network evaluation for each subset
+        
         Returns
         --------
-        shapley_coefficients : an array of the 16 scores for each input
+        shapley_coefficients : array of shape (2,2) 
+            the shapley coefficients of each quadrant
         """
 
         phi1 = (score[14] - score[15] + score[0] - score[1]) / 4\
@@ -168,20 +186,26 @@ class HierarchicalShap:
                   + score[1] - score[7] + score[3] - score[10] + score[2] - score[9]) / 12
 
         shapley_coefficients = np.array([[phi1, phi2], [phi3, phi4]])
+        
         return shapley_coefficients
 
     def get_salient_regions(self, shapley_values, tol, regions):
-        """
-        Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        """ Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol.
+        
         Parameters
         ----------
-        shapley_values : the Shapley coefficients associated with each quadrant
-        tol : the specified tolerance for a sub-region to be considered salient
+        shapley_values : array of shape (2,2) 
+            the shapley coefficients of each quadrant
+        tol : float 
+            the specified tolerance for a sub-region to be considered salient
         regions : the coordinates associated with each quadrant
+        
         Returns
         --------
-        srs : a list of the coordinates of the quadrants whose Shapley values were large enough
+        srs : list of tuples of tuples of ints 
+            a list of all salient regions (a tuple with start coordinates, size), i.e. regions whose Shapley values were large enough
         """
+        
         srs = []
         for i in range(len(shapley_values)):
             for j in range(len(shapley_values[0])):
@@ -191,15 +215,24 @@ class HierarchicalShap:
         return srs
 
     def display_salient(self, im, srs_coll, count, filename):
-        """
-        Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        """ Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol.
+        
         Parameters
         ----------
-        im : the original image, in input format
+        im : torch tensor 
+            the input image
         srs_coll : a collection of all regions deemed salient
-        count : a normalizing mask which determines how many time each pixel was given a chance to be salient
-        filename : name of the file to save the figure to
+        count : numpy array
+            a normalizing mask which determines how many time each pixel was given a chance to be counted as salient
+        filename : string 
+            name of the file to save the figure
+        
+        Returns
+        -------
+        mask : numpy array 
+            the saliency map 
         """
+        
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(60, 30))
 
         sample_image = im.numpy().transpose(1, 2, 0)
@@ -240,18 +273,27 @@ class HierarchicalShap:
         return mask
 
     def do_all(self, im, label, start, region_size, tol, debug=False):
-        """
-        Secondary main loop: do everything for one region of the image.
+        """ Secondary main loop: do everything for one region of the image.
+        
+        Parameters
         ----------
-        im : the input image
-        start : the starting coordinates of the region
-        region_size : self-explanatory
-        tol : the specified tolerance for a sub-region to be considered salient
-        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
+        im : torch tensor 
+            the input image
+        start : tuple of ints
+            the starting coordinates of the region
+        region_size : tuple of ints
+            size of the region
+        tol : float
+            the specified tolerance for a sub-region to be considered salient
+        debug : bool 
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+            
         Returns
         --------
-        srs : a list of the coordinates of the quadrants whose Shapley values were large enough
+        srs : list of tuples of tuples of ints 
+            a list of all salient regions (a tuple with start coordinates, size), i.e. regions whose Shapley values were large enough
         """
+        
         images_final, regions = self.construct_subsets(im, start, region_size)
         score = self.subset_scores(images_final, label)
         sm = self.shapley_of_quadrants(score)
@@ -266,17 +308,31 @@ class HierarchicalShap:
         return srs
 
     def saliency_map(self, image, label, tolerance, only_one_run=False, debug=False, max_depth=30, filename=None):
-        """
-        Create and then show a saliency map built with the Hierarchical Shapley method.
+        """ Create and then show a saliency map built with the Hierarchical Shapley method.
+        
+        Parameters
         ----------
-        im : the input image
-        label : the label with respect to which we want to analyze - typically 1
-        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
-        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
-        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
-        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
-        filename : name of the file to save the figure to
+        image : torch tensor 
+            the input image
+        label : int in {0,1}
+            the label with respect to which we want to analyze - typically 1
+        tolerance : float
+            the specified tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : bool
+            when False, several runs are done by also considering 16 cropped versions of the input
+        debug : bool
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : int
+            the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : string
+            name of the file to save the figure to
+        
+        Returns
+        -------
+        mask : numpy array
+            the saliency map 
         """
+        
         ls = []
         count = np.zeros(image.shape)
         xf = [image.shape[1], image.shape[2]]
@@ -323,20 +379,26 @@ class HierarchicalShap:
             except RuntimeError as w:
                 print(w, "Run ignored, consider increasing tolerance.")
 
-        return self.display_salient(image, ls, count, filename)
+        mask = self.display_salient(image, ls, count, filename)
+        return mask
 
     def get_salient_regions_optim_tol(self, shapley_values, tols, regions):
-        """
-        Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        """ Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol.
+        
         Parameters
         ----------
-        shapley_values : the Shapley coefficients associated with each quadrant
-        tol : the specified tolerance for a sub-region to be considered salient
+        shapley_values : array of shape (2,2)
+            the Shapley coefficients associated with each quadrant
+        tol : float
+            the specified tolerance for a sub-region to be considered salient
         regions : the coordinates associated with each quadrant
+        
         Returns
         --------
-        srs : a list of the coordinates of the quadrants whose Shapley values were large enough
+        srs : list of tuples of tuples of ints 
+            a list of all salient regions (a tuple with start coordinates, size), i.e. regions whose Shapley values were large enough
         """
+        
         srs = [[] for r in range(len(tols))]
         for i in range(len(shapley_values)):
             for j in range(len(shapley_values[0])):
@@ -346,18 +408,27 @@ class HierarchicalShap:
         return srs
 
     def do_all_optim_tol(self, im, label, start, region_size, tols, debug=False):
-        """
-        Secondary main loop: do everything for one region of the image.
+        """ Secondary main loop: do everything for one region of the image, in a way that is optimal when using several tolerances 
+        
+        Parameters
         ----------
-        im : the input image
-        start : the starting coordinates of the region
-        region_size : self-explanatory
-        tol : the specified tolerance for a sub-region to be considered salient
-        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
+        im : torch tensor 
+            the input image
+        start : tuple of ints
+            the starting coordinates of the region
+        region_size : tuple of ints
+            size of the region
+        tol : float or list of flaots
+            the specified tolerance for a sub-region to be considered salient
+        debug : bool
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+            
         Returns
         --------
-        srs : a list of the coordinates of the quadrants whose Shapley values were large enough
+        srs : list of tuples of tuples of ints 
+            a list of all salient regions (a tuple with start coordinates, size), i.e. regions whose Shapley values were large enough
         """
+        
         images_final, regions = self.construct_subsets(im, start, region_size)
         score = self.subset_scores(images_final, label)
         sm = self.shapley_of_quadrants(score)
@@ -373,17 +444,31 @@ class HierarchicalShap:
 
     def saliency_map_optim_tol(self, image, label, tolerance, only_one_run=False, debug=False, max_depth=30,
                                filename=None):
-        """
-        Create and then show a saliency map built with the Hierarchical Shapley method.
+        """ Create and then show a saliency map built with the Hierarchical Shapley method (optimized for when using a list of tolerances).
+        
+        Parameters
         ----------
-        im : the input image
-        label : the label with respect to which we want to analyze - typically 1
-        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
-        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
-        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
-        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
-        filename : name of the file to save the figure to
+        im : torch tensor 
+            the input image
+        label : int in {0,1}
+            the label with respect to which we want to analyze - typically 1
+        tolerance : float or list of floats
+            the specified tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : bool 
+            when False, several runs are done by also considering 16 cropped versions of the input
+        debug : bool, optional 
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : int, optional 
+            the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : string, optional 
+            name of the file to save the figure to
+        
+        Returns
+        -------
+        mask : numpy array
+            the saliency map 
         """
+        
         ls = []
         count = np.zeros(image.shape)
         xf = [image.shape[1], image.shape[2]]
@@ -435,20 +520,36 @@ class HierarchicalShap:
                     else:
                         print("Max depth of %d reached at tolerance %.3f" % (max_depth, tolerance[r]))
 
-        return self.display_salient(image, ls, count, filename)
-
+        mask = self.display_salient(image, ls, count, filename)
+        return mask
+    
     def saliency_map_optim_rand(self, image, label, tolerance, debug=False, max_depth=30, filename=None):
-        """
-        Create and then show a saliency map built with the Hierarchical Shapley method.
+        """ Create and then show a saliency map built with the Hierarchical Shapley method 
+        (optimized for using several cropped versions of the original input). 
+        
+        Parameters
         ----------
-        im : the input image
-        label : the label with respect to which we want to analyze - typically 1
-        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
-        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
-        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
-        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
-        filename : name of the file to save the figure to
+        im : torch tensor 
+            the input image
+        label : int in {0,1}
+            the label with respect to which we want to analyze - typically 1
+        tolerance : float or list of floats
+            the tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : bool 
+            when False, several runs are done by also considering 16 cropped versions of the input
+        debug : bool 
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : int
+            the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : string 
+            name of the file to save the figure to
+            
+        Returns
+        -------
+        mask : numpy array
+            the saliency map 
         """
+        
         ls = []
 
         xf = [image.shape[1], image.shape[2]]
@@ -460,7 +561,8 @@ class HierarchicalShap:
         dx, dy = image.shape[1] // 4, image.shape[2] // 4
 
         def salient_regions(I, sx, sy):
-
+            """ Get salient regions of image I, knowing that it has been shifted by sx and sy from the original input. """
+            
             finished = []
 
             for tol in tolerance:
@@ -511,18 +613,29 @@ class HierarchicalShap:
         ls.append(salient_regions(image_tr, -dx, dy))
         count[:, :lx - dx, dy:] += np.ones((3, lx - dx, ly - dy))
 
-        return self.display_salient_optim_rand(image, ls, count, filename)
+        mask = self.display_salient_optim_rand(image, ls, count, filename)
+        return mask
 
     def display_salient_optim_rand(self, im, srs_coll, count, filename):
-        """
-        Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        """ Determine which of the 4 quadrants are salient, i.e. have Shapley value larger than tol
+        (optimized for using several cropped versions of the original input). 
+        
         Parameters
         ----------
-        im : the original image, in input format
+        im : torch tensor 
+            the input image
         srs_coll : a collection of all regions deemed salient
-        count : a normalizing mask which determines how many time each pixel was given a chance to be salient
-        filename : name of the file to save the figure to
+        count : numpy array
+            a normalizing mask which determines how many time each pixel was given a chance to be salient
+        filename : string 
+            name of the file to save the figure to
+        
+        Returns
+        -------
+        mask : numpy array
+            the saliency map 
         """
+        
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(60, 30))
 
         sample_image = im.numpy().transpose(1, 2, 0)
@@ -566,7 +679,32 @@ class HierarchicalShap:
         return mask
 
     def get_list_optim_tol(self, image, label, tolerance, sx, sy, debug=False, max_depth=30):
-
+        """ Create and then show a saliency map built with the Hierarchical Shapley method
+        (optimized for using several cropped version of the initial input and several tolerance thresholds).
+        
+        Parameters
+        ----------
+        image : torch tensor 
+            the input image
+        label : int in {0,1}
+            the label with respect to which we want to analyze - typically 1
+        tolerance : float or list of floats
+            the specified tolerance for a sub-region to be considered salient. A list is expected.
+        sx : int
+            shift in the x-coordinate of image with respect to the original input
+        sy : int
+            shift in the y-coordinate of image with respect to the original input
+        debug : bool
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : int
+            the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        
+        Returns
+        -------
+        ls : list of tuples of tuples of ints
+            the list of salient regions in I, corrected for their position in the original input 
+        """
+        
         ls = []
         xf = [image.shape[1], image.shape[2]]
 
@@ -607,17 +745,32 @@ class HierarchicalShap:
         return ls
 
     def saliency_map_optim_all(self, image, label, tolerance, debug=False, max_depth=30, filename=None):
-        """
-        Create and then show a saliency map built with the Hierarchical Shapley method.
+        """ Create and then show a saliency map built with the Hierarchical Shapley method
+        (optimized for using several cropped version of the initial input and several tolerance thresholds).
+        
+        Parameters
         ----------
-        im : the input image
-        label : the label with respect to which we want to analyze - typically 1
-        tolerance : the specified tolerance for a sub-region to be considered salient. A list is expected.
-        only_one_run : when False, several runs are done by also considering 16 cropped versions of the input
-        debug : if True, all subsets, there associated scores and the Shapley values will be displayed
-        max_depth : the maximum number of divisions you want to allow before deciding the tolerance is too low.
-        filename : name of the file to save the figure to
+        im : torch tensor 
+            the input image
+        label : int in {0,1}
+            the label with respect to which we want to analyze - typically 1
+        tolerance : float or list of floats
+            the specified tolerance for a sub-region to be considered salient. A list is expected.
+        only_one_run : bool
+            when False, several runs are done by also considering 16 cropped versions of the input
+        debug : bool
+            if True, all subsets, there associated scores and the Shapley values will be displayed
+        max_depth : int
+            the maximum number of divisions you want to allow before deciding the tolerance is too low.
+        filename : string 
+            name of the file to save the figure to
+        
+        Returns
+        -------
+        mask : numpy array 
+            the saliency map 
         """
+        
         ls = []
 
         xf = [image.shape[1], image.shape[2]]
@@ -660,5 +813,6 @@ class HierarchicalShap:
         a = self.get_list_optim_tol(image_tr, label, tolerance, -dx, dy, debug=False, max_depth=30)
         ls.append(a)
         count[:, :lx - dx, dy:] += np.ones((3, lx - dx, ly - dy))
-
-        return self.display_salient_optim_rand(image, ls, count, filename)
+        
+        mask = self.display_salient_optim_rand(image, ls, count, filename)
+        return mask
