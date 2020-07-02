@@ -1,9 +1,12 @@
 # Interpretability
 This repo contains Alexandre Luster's work for a Biomedical Engineering Undergraduate Research course at the Johns Hopkins University.
+
 ## Aim 
 Study and compare various methods to produce saliency maps on a synthetic dataset. These methods are ueful in understanding what parts of an image are important for predictions made by a neural network. 
 Present a modified version of the SHAP method, which functions in a recursive and hierarchical manner to produce exact Shapley coefficients. 
+
 ## Content 
+
 ### Generating 
 Contains an Ipython notebook to generate the desired dataset.
 Once generated, you will have to upload the zip file to a drive account to go on with the training on colab. 
@@ -13,10 +16,13 @@ There are 3 rules to chose from:
 - 4: presence of a black circle and absence of crosses
 For rule 2, a csv file is also generated which contains the ground truth positions of the centers of the crosses within an image. This allows to judge the quality of the saliency maps created with SHAP and Hierarchical Shapley.
 
-### Training 
-There are different ipynb, all on google colab, which correspond to the different datasets. 
-### Interpreting 
 ### Hierarchical Shapley
+
+### Training 
+The differet Ipython notebooks, hosted on google colab, are used to train a CNN to classify the different types of data. 
+
+### Interpreting 
+
 ### Utils 
 
 ## References 
