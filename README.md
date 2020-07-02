@@ -2,7 +2,7 @@
 This repo contains a project done for a Biomedical Engineering Undergraduate Research course at the Johns Hopkins University.
 For any questions, reach out to Alexandre Luster: alexandre.luster@epfl.ch.
 Documentation: 
-- https://htmlpreview.github.io/?https://github.com/Sulam-Group/Interpretability/blob/master/docs/Hierarchical%20Shapley/HierarchicalShapley.html
+- HierarchicalShapley: https://htmlpreview.github.io/?https://github.com/Sulam-Group/Interpretability/blob/master/docs/Hierarchical%20Shapley/HierarchicalShapley.html
 
 ## Aim 
 Study and compare various methods to produce saliency maps on a synthetic dataset. These methods are ueful in understanding what parts of an image are important for predictions made by a neural network. 
