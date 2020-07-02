@@ -18,6 +18,10 @@ There are 3 rules to chose from:
 For rule 2, a csv file is also generated which contains the ground truth positions of the centers of the crosses within an image. This allows to judge the quality of the saliency maps created with SHAP and Hierarchical Shapley.
 
 ### Hierarchical Shapley
+The presented interpretation method is available in HierarchicalShapley.py. Example: 
+    h = HierarchicalShap(net, background) # Initialize the model; net is the torch model to study and background a torch tensor representing background.
+    
+
 
 ### Training 
 The differet Ipython notebooks, hosted on google colab, are used to train a CNN to classify the different types of data. 
