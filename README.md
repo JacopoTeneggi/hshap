@@ -23,7 +23,9 @@ The presented interpretation method is available in HierarchicalShapley.py. Exam
     h = HierarchicalShap(net, background) # Initialize the model; net is the torch model to study and background a torch tensor representing background.
     mask = h.saliency_map(image, label, tolerance = [8,12], only_one_run = True, debug=False, max_depth = 30) # Generate the saliency map 
     
+There are four different implementations. Saliency_map, saliency_map_optim_tol (improved for running the algorithm when judging with several thresholds), saliency_map_optim_rand (optimized for when using only_one_run = False, meaning computing the saliency map for the original input but also other shifted inputs) and saliency_map_optim_all (optimized for when using several thresholds and shifted inputs). 
 
+In ShapleyComparison.ipynb, an Ipython notebook hosted on google colab, the different implementations are compared, and this module is compared to other shapley-based methods.
 
 ### Training 
 The differet Ipython notebooks, hosted on google colab, are used to train a CNN to classify the different types of data. 
