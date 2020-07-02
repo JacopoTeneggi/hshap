@@ -19,7 +19,9 @@ For rule 2, a csv file is also generated which contains the ground truth positio
 
 ### Hierarchical Shapley
 The presented interpretation method is available in HierarchicalShapley.py. Example: 
+
     h = HierarchicalShap(net, background) # Initialize the model; net is the torch model to study and background a torch tensor representing background.
+    mask = h.saliency_map(image, label, tolerance = [8,12], only_one_run = True, debug=False, max_depth = 30) # Generate the saliency map 
     
 
 
