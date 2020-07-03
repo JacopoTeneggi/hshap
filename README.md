@@ -11,7 +11,7 @@ Present a modified version of the SHAP method, which functions in a recursive an
 ## Content 
 
 ### Generating 
-Contains an Ipython notebook to generate the desired dataset.
+Contains an IPython notebook to generate the desired dataset.
 Once generated, you will have to upload the zip file to a drive account to go on with the training on colab. 
 There are 3 rules to chose from: 
 - 2: presence of a cross
@@ -30,18 +30,27 @@ There are four different implementations. Saliency_map, saliency_map_optim_tol (
 In ShapleyComparison.ipynb, an Ipython notebook hosted on google colab, the different implementations are compared, and this module is compared to other shapley-based methods.
 
 ### Training 
-The differet Ipython notebooks, hosted on google colab, are used to train a CNN to classify the different types of data. 
+The different IPython notebooks, hosted on google colab, are used to train a CNN to classify the different types of data. 
 
 ### Interpreting 
+These IPython notebooks, hosted on google colab, show saliency maps obtained from the different pre-trained nets with a wide range of methods: 
+- backpropagation
+- GradCAM
+- GradCAM++
+- Smooth GradCAM++
+- SHAP DeepExplainer, GradientExplainer
+- Hierarchical Shapley
 
 ### Utils 
+- utils.py contains utility functions for training purposes
+- interpret.py contains utility functions for interpreting trained networks
 
 ## References 
 ### Repositories 
 - SHAP: https://github.com/slundberg/shap
 - Flashtorch: https://github.com/MisaOgura/flashtorch
 - GradCAM and GradCAM++: https://github.com/vickyliin/gradcam_plus_plus-pytorch
-- Smooth GradCAM++: https://github.com/yiskw713/SmoothGradCAMplusplus
+- SmoothCAM: https://github.com/yiskw713/SmoothGradCAMplusplus
 ### Publications 
 #### General
 - Adebayo J et al. (2018), Sanity Checks for Saliency Maps, [online], https://arxiv.org/abs/1810.03292
