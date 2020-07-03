@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.3" />
+<title>Utils.utils API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>Utils.utils</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import torch
+import matplotlib.pyplot as plt
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+def datasetMeanStd(loader):
+    &#34;&#34;&#34; Computes the mean and standard deviation of a dataloader of 3 channel images
+
+    Parameters
+    ----------
+    loader : torch.utils.data.DataLoader
+        the dataloader whose mean is computed
+
+    Returns
+    -------
+    mean : numpy array of shape (3,)
+        the channel-wise mean of the dataloader
+    std : numpy array of shape (3,)
+        the channel-wise standard deviation of the dataloader
+    &#34;&#34;&#34;
+
+    mean = 0.
+    std = 0.
+    N = len(loader.dataset)
+    for images, _ in loader:
+        batch_samples = images.size(0)
+        images = images.view(batch_samples, images.size(1), -1)
+        mean += images.mean(2).sum(0)
+        std += images.std(2).sum(0)
+    mean /= N
+    std /= (N-1)
+    mean = mean.numpy()
+    std = std.numpy()
+    return mean, std
+
+
+def denormalize(im, mean, std):
+    &#34;&#34;&#34; Restore an image to its range before normalization
+
+    Parameters
+    ----------
+    im : numpy array with 3 channels
+        the image to denormalize
+    mean : numpy array of shape (3,)
+        the channel-wise mean of the dataloader
+    std : numpy array of shape (3,)
+        the channel-wise standard deviation of the dataloader
+
+    Returns
+    -------
+    denorm : numpy array with 3 channels
+        the denormalized image
+    &#34;&#34;&#34;
+
+    denorm = im*std + mean
+    return denorm
+
+def input2image(input, mean, std):
+    &#34;&#34;&#34; Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
+
+    Parameters
+    ----------
+    input : torch tensor with 3 channels
+        the input tensor to process
+    mean : numpy array of shape (3,)
+        the channel-wise mean of the dataloader
+    std : numpy array of shape (3,)
+        the channel-wise standard deviation of the dataloader
+
+    Returns
+    -------
+    denorm : numpy array with 3 channels
+        the denormalized image
+    &#34;&#34;&#34;
+
+    sample_image = input.numpy().transpose(1, 2, 0)
+    denorm = denormalize(sample_image, mean, std)
+    return deorm
+
+def display_image(im, true_label, predicted_label=None, figure_size = (8, 5)):
+    &#34;&#34;&#34; Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
+
+    Parameters
+    ----------
+    im : numpy array with 3 channels
+        the image to display
+    true_label : int in {0,1}
+        the ground truth label of im
+    true_label : int in {0,1}, optional 
+        the predicted truth label of im by the neural network 
+    figure_size : tuple of ints, optional 
+        size of the matplotlib.pyplot.figure object
+    &#34;&#34;&#34;
+
+    plt.figure(figsize=figure_size)
+    plt.imshow(im)
+    title_ = &#34;True label : &#34; + str(true_label)
+    if (predicted_label != None):
+        title_ += &#34;/ Predicted : &#34; + str(predicted_label)
+    plt.title(title_)
+
+def almost_equal(n1, n2, e):
+    &#34;&#34;&#34; Determine if n1 and n2 are almost equal, at a tolerance e.
+
+    Parameters
+    ----------
+    n1 : float
+        the first number
+    n2 : float
+        the second number
+    e : float
+        the tolerance
+
+    Returns
+    -------
+    verdict : bool
+        whether or not they are almost equal
+    &#34;&#34;&#34;
+
+    verdict = abs(n1-n2) &lt; e
+    return verdict
+
+def network_has_converged(loss, e):
+    &#34;&#34;&#34; Determine if n1 and n2 are almost equal, at a tolerance e.
+
+    Parameters
+    ----------
+    loss : list of floats
+        the list of losses during training
+    e : float
+        the tolerance for the stopping criterion
+
+    Returns
+    -------
+    converged : bool
+        whether or not training has converged
+    &#34;&#34;&#34;
+
+    if (len(loss) &lt; 3):
+        converged = False
+    else:
+        converged = (almost_equal(loss[-3], loss[-2], e) and
+            almost_equal(loss[-3], loss[-1], e) )
+    return converged
+
+
+def training_accuracy(network, loader):
+    &#34;&#34;&#34; Determine the accuracy of the predictions of a network.
+
+    Parameters
+    ----------
+    network : torch.nn.Module or subclass
+        the network to test
+    loader : torch.utils.data.DataLoader
+        the training dataloader
+
+    Returns
+    -------
+    accuracy : float betwee 0. and 100.
+        the training accuracy
+    &#34;&#34;&#34;
+
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for data in loader:
+            images, labels = data
+            outputs = network(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    accuracy = 100 * correct/total
+    return accuracy
+
+def validation_stats(network, loader, criterion):
+    &#34;&#34;&#34; Judge the training of the network on the validation set.
+
+    Parameters
+    ----------
+    network : torch.nn.Module or subclass
+        the network to test
+    loader : torch.utils.data.DataLoader
+        the validation dataloader
+    criterion : torch.nn loss function
+        the loss function criterion
+
+    Returns
+    -------
+    accuracy : float between 0. and 100.
+        the validation accuracy
+    normalized_loss : float
+        the loss per input
+    &#34;&#34;&#34;
+
+    total_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in loader:
+          images, labels = data
+          outputs = network(images)
+          _, predicted = torch.max(outputs.data, 1)
+          total += labels.size(0)
+          correct += (predicted == labels).sum().item()
+          loss = criterion(outputs, labels)
+          total_loss += loss.item()
+
+    accuracy, normalized_loss = (100 * correct/total, total_loss/len(loader.dataset))
+    return accuracy, normalized_loss
+
+def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
+    &#34;&#34;&#34; Plot the training loss and accuracy of the network on the training and validation set.
+
+    Parameters
+    ----------
+    train_loss : list of floats
+        the loss on the training set
+    val_loss : list of floats
+        the loss on the validation set
+    train_accuracy : float between 0. and 100.
+        the accuracy on the training set
+    val_accuracy : float between 0. and 100.
+        the accuracy on the validations set
+    &#34;&#34;&#34;
+
+    fig, (ax1, ax2) = plt.subplots(1,2, figsize = (10,5))
+    x_scale = np.linspace(0, len(train_loss)- 1, len(train_loss) )
+    _ = ax1.plot(x_scale, train_loss)
+    _ = ax1.plot(x_scale, val_loss)
+    ax1.legend([&#34;Loss on the training set&#34;, &#34;Loss on the validation set&#34;])
+    ax1.set_xlabel(&#34;Number of generations&#34;)
+    ax1.set_ylabel(&#34;Evaluation of the loss function&#34;)
+
+    x_scale = np.linspace(0, len(train_accuracy)- 1, len(train_accuracy) )
+    _ = ax2.plot(x_scale, train_accuracy)
+    _ = ax2.plot(x_scale, val_accuracy)
+    ax2.legend([&#34;Training accuracy&#34;, &#34;Validation accuracy&#34;])
+    ax2.set_xlabel(&#34;Number of generations&#34;)
+    ax2.set_ylabel(&#34;Accuracy &#34;)
+
+
+def test(net, loader):
+    &#34;&#34;&#34; Confront the network to the testing set.
+
+    Parameters
+    ----------
+    net : torch.nn.Module or subclass
+        the network to test
+    loader : torch.utils.data.DataLoader
+        the testing dataloader
+
+    Returns
+    -------
+    wrong_im : list of torch tensors
+        inputs classified wrongly
+    wrong_label : list of ints ({0,1})
+        corresponding labels
+    wrong_label : list of ints ({0,1})
+        corresponding predictions (redundant)
+    &#34;&#34;&#34;
+
+    correct = 0
+    total = 0
+    wrong_im = []
+    wrong_label = []
+    wrongly_predicted_label = []
+
+    with torch.no_grad():
+        for data in loader:
+            images, labels = data
+
+            outputs = net(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+            k = 0
+            for truth in (predicted == labels):
+                if not truth:
+                    wrong_im.append(images[k])
+                    wrong_label.append(int(labels[k]))
+                    wrongly_predicted_label.append(int(predicted[k]))
+                k += 1
+
+    print(&#34;Accuracy of the network on the &#34; + str(total) + &#39; test images: %.3f %%&#39; % (
+            100 * correct / total))
+
+    print(&#34;Number of mistakes : &#34; + str(total - correct))
+    return wrong_im, wrong_label, wrongly_predicted_label
+
+
+def train(net, optimizer, criterion, max_epochs, dataloader, valloader ):
+    &#34;&#34;&#34; Train a CNN.
+
+    Parameters
+    ----------
+    net : torch.nn.Module or subclass
+        the network to test
+    optimizer : instance of a torch.optim class
+        the optimizer for the CNN
+    criterion : torch.nn loss function
+        the loss function criterion
+    max_epochs : int
+        maximum number of epochs before terminating training early
+    dataloader : torch.utils.data.DataLoader
+        dataloader for the training set
+    valloader : torch.utils.data.DataLoader
+        dataloader for the validation set
+
+
+    Returns
+    -------
+    train_loss : list of floats
+        the loss on the training set
+    val_loss : list of floats
+        the loss on the validation set
+    train_accuracy : float between 0. and 100.
+        the accuracy on the training set
+    val_accuracy : float between 0. and 100.
+        the accuracy on the validations set
+    &#34;&#34;&#34;
+
+    converged = False
+    epsilon = 0.0001
+    train_loss, val_loss, train_accuracy, val_accuracy = [], [], [], []
+    for epoch in range(max_epochs):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        if not converged:
+            for i, data in enumerate(dataloader, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                inputs, labels = data
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+
+                loss.backward()
+                optimizer.step()
+
+                # plot loss
+                running_loss += loss.item()
+
+            train_loss.append(running_loss / len(dataloader.dataset))
+            train_accuracy.append(training_accuracy(net, dataloader))
+            A, L = validation_stats(net, valloader, criterion)
+            val_loss.append(L)
+            val_accuracy.append(A)
+
+            print(&#39;Generation %d. training loss: %.4f,&#39;
+                  % (epoch + 1, train_loss[-1]), end=&#34;&#34;)
+            print(&#34; training accuracy: %.2f &#34; % (train_accuracy[-1]), end=&#34;%,&#34;)
+            print(&#34; validation loss: %.4f,&#34; % (val_loss[-1]), end=&#34; &#34;)
+            print(&#34; validation accuracy: %.2f &#34; % (val_accuracy[-1]), end=&#34;% \n&#34;)
+
+            converged = network_has_converged(train_loss, epsilon)
+
+    if (converged):
+        print(&#34;Network has converged.&#34;)
+    else:
+        print(&#34;Network hasn&#39;t been able to converge in &#34; + str(max_epochs) + &#34; generations.&#34;)
+    return train_loss, val_loss, train_accuracy, val_accuracy
+
+class Net(nn.Module):
+    &#34;&#34;&#34; CNN architecture for classifying images of 120 pixels in width and 100 in height.
+    &#34;&#34;&#34;
+
+    def __init__(self):
+        &#34;&#34;&#34; Initialize the CNN.
+        &#34;&#34;&#34;
+
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool1 = nn.MaxPool2d(2)
+        self.conv2 = nn.Conv2d(6, 16, 4)
+        self.pool2 = nn.MaxPool2d(5)
+        self.fc1 = nn.Linear(16 * 9 * 11, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 2)
+        self.drop = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        &#34;&#34;&#34; Perform forward propagation across the network.
+
+        Parameters
+        ----------
+        x : torch tensor
+            CNN input tensor images
+
+        Returns
+        -------
+        x : torch tensor
+            CNN output class labels
+        &#34;&#34;&#34;
+
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+        x = self.drop(F.relu(self.fc1(x)))
+        x = self.drop(F.relu(self.fc2(x)))
+        x = self.fc3(x)
+        return x
+
+    def num_flat_features(self, x):
+        &#34;&#34;&#34; Compute the number entries of one item in a batch.
+
+        Parameters
+        ----------
+        x : torch tensor
+            batch of inputs or processed inputs
+
+        Returns
+        -------
+        num_features : int
+            number of entries in one item
+        &#34;&#34;&#34;
+
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
+
+
+class HdNet(nn.Module):
+    &#34;&#34;&#34; CNN architecture for classifying images of 1200 pixels in width and 1000 in height.
+        &#34;&#34;&#34;
+    def __init__(self):
+        &#34;&#34;&#34; Initialize the CNN.
+        &#34;&#34;&#34;
+
+        super(HdNet, self).__init__()
+        self.conv0 = nn.Conv2d(in_channels = 3, out_channels = 6, kernel_size = 5, stride=5)
+        self.pool0 = nn.MaxPool2d(kernel_size = 2, stride=2)
+        self.conv1 = nn.Conv2d(6, 10, 5)
+        self.pool1 = nn.MaxPool2d(2)
+        self.conv2 = nn.Conv2d(10, 16, 4)
+        self.pool2 = nn.MaxPool2d(5)
+        self.fc1 = nn.Linear(16 * 9 * 11, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 2)
+        self.drop = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        &#34;&#34;&#34; Perform forward propagation across the network.
+
+        Parameters
+        ----------
+        x : torch tensor
+            CNN input tensor images
+
+        Returns
+        -------
+        x : torch tensor
+            CNN output class labels
+        &#34;&#34;&#34;
+
+        x = F.relu(self.conv0(x))
+        x = self.pool0(x)
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+        x = self.drop(F.relu(self.fc1(x)))
+        x = self.drop(F.relu(self.fc2(x)))
+        x = self.fc3(x)
+        return x
+
+    def num_flat_features(self, x):
+        &#34;&#34;&#34; Compute the number entries of one item in a batch.
+
+        Parameters
+        ----------
+        x : torch tensor
+            batch of inputs or processed inputs
+
+        Returns
+        -------
+        num_features : int
+            number of entries in one item
+        &#34;&#34;&#34;
+
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="Utils.utils.almost_equal"><code class="name flex">
+<span>def <span class="ident">almost_equal</span></span>(<span>n1, n2, e)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Determine if n1 and n2 are almost equal, at a tolerance e.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>n1</code></strong> :&ensp;<code>float</code></dt>
+<dd>the first number</dd>
+<dt><strong><code>n2</code></strong> :&ensp;<code>float</code></dt>
+<dd>the second number</dd>
+<dt><strong><code>e</code></strong> :&ensp;<code>float</code></dt>
+<dd>the tolerance</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>verdict</code></strong> :&ensp;<code>bool</code></dt>
+<dd>whether or not they are almost equal</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def almost_equal(n1, n2, e):
+    &#34;&#34;&#34; Determine if n1 and n2 are almost equal, at a tolerance e.
+
+    Parameters
+    ----------
+    n1 : float
+        the first number
+    n2 : float
+        the second number
+    e : float
+        the tolerance
+
+    Returns
+    -------
+    verdict : bool
+        whether or not they are almost equal
+    &#34;&#34;&#34;
+
+    verdict = abs(n1-n2) &lt; e
+    return verdict</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.datasetMeanStd"><code class="name flex">
+<span>def <span class="ident">datasetMeanStd</span></span>(<span>loader)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes the mean and standard deviation of a dataloader of 3 channel images</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>loader</code></strong> :&ensp;<code>torch.utils.data.DataLoader</code></dt>
+<dd>the dataloader whose mean is computed</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>mean</code></strong> :&ensp;<code>numpy array</code> of <code>shape (3,)</code></dt>
+<dd>the channel-wise mean of the dataloader</dd>
+<dt><strong><code>std</code></strong> :&ensp;<code>numpy array</code> of <code>shape (3,)</code></dt>
+<dd>the channel-wise standard deviation of the dataloader</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def datasetMeanStd(loader):
+    &#34;&#34;&#34; Computes the mean and standard deviation of a dataloader of 3 channel images
+
+    Parameters
+    ----------
+    loader : torch.utils.data.DataLoader
+        the dataloader whose mean is computed
+
+    Returns
+    -------
+    mean : numpy array of shape (3,)
+        the channel-wise mean of the dataloader
+    std : numpy array of shape (3,)
+        the channel-wise standard deviation of the dataloader
+    &#34;&#34;&#34;
+
+    mean = 0.
+    std = 0.
+    N = len(loader.dataset)
+    for images, _ in loader:
+        batch_samples = images.size(0)
+        images = images.view(batch_samples, images.size(1), -1)
+        mean += images.mean(2).sum(0)
+        std += images.std(2).sum(0)
+    mean /= N
+    std /= (N-1)
+    mean = mean.numpy()
+    std = std.numpy()
+    return mean, std</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.denormalize"><code class="name flex">
+<span>def <span class="ident">denormalize</span></span>(<span>im, mean, std)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Restore an image to its range before normalization</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>im</code></strong> :&ensp;<code>numpy array with 3 channels</code></dt>
+<dd>the image to denormalize</dd>
+<dt><strong><code>mean</code></strong> :&ensp;<code>numpy array</code> of <code>shape (3,)</code></dt>
+<dd>the channel-wise mean of the dataloader</dd>
+<dt><strong><code>std</code></strong> :&ensp;<code>numpy array</code> of <code>shape (3,)</code></dt>
+<dd>the channel-wise standard deviation of the dataloader</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>denorm</code></strong> :&ensp;<code>numpy array with 3 channels</code></dt>
+<dd>the denormalized image</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def denormalize(im, mean, std):
+    &#34;&#34;&#34; Restore an image to its range before normalization
+
+    Parameters
+    ----------
+    im : numpy array with 3 channels
+        the image to denormalize
+    mean : numpy array of shape (3,)
+        the channel-wise mean of the dataloader
+    std : numpy array of shape (3,)
+        the channel-wise standard deviation of the dataloader
+
+    Returns
+    -------
+    denorm : numpy array with 3 channels
+        the denormalized image
+    &#34;&#34;&#34;
+
+    denorm = im*std + mean
+    return denorm</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.display_image"><code class="name flex">
+<span>def <span class="ident">display_image</span></span>(<span>im, true_label, predicted_label=None, figure_size=(8, 5))</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>im</code></strong> :&ensp;<code>numpy array with 3 channels</code></dt>
+<dd>the image to display</dd>
+<dt><strong><code>true_label</code></strong> :&ensp;<code>int in {0,1}</code></dt>
+<dd>the ground truth label of im</dd>
+<dt><strong><code>true_label</code></strong> :&ensp;<code>int in {0,1}</code>, optional</dt>
+<dd>the predicted truth label of im by the neural network</dd>
+<dt><strong><code>figure_size</code></strong> :&ensp;<code>tuple</code> of <code>ints</code>, optional</dt>
+<dd>size of the matplotlib.pyplot.figure object</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def display_image(im, true_label, predicted_label=None, figure_size = (8, 5)):
+    &#34;&#34;&#34; Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
+
+    Parameters
+    ----------
+    im : numpy array with 3 channels
+        the image to display
+    true_label : int in {0,1}
+        the ground truth label of im
+    true_label : int in {0,1}, optional 
+        the predicted truth label of im by the neural network 
+    figure_size : tuple of ints, optional 
+        size of the matplotlib.pyplot.figure object
+    &#34;&#34;&#34;
+
+    plt.figure(figsize=figure_size)
+    plt.imshow(im)
+    title_ = &#34;True label : &#34; + str(true_label)
+    if (predicted_label != None):
+        title_ += &#34;/ Predicted : &#34; + str(predicted_label)
+    plt.title(title_)</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.input2image"><code class="name flex">
+<span>def <span class="ident">input2image</span></span>(<span>input, mean, std)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>input</code></strong> :&ensp;<code>torch tensor with 3 channels</code></dt>
+<dd>the input tensor to process</dd>
+<dt><strong><code>mean</code></strong> :&ensp;<code>numpy array</code> of <code>shape (3,)</code></dt>
+<dd>the channel-wise mean of the dataloader</dd>
+<dt><strong><code>std</code></strong> :&ensp;<code>numpy array</code> of <code>shape (3,)</code></dt>
+<dd>the channel-wise standard deviation of the dataloader</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>denorm</code></strong> :&ensp;<code>numpy array with 3 channels</code></dt>
+<dd>the denormalized image</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def input2image(input, mean, std):
+    &#34;&#34;&#34; Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
+
+    Parameters
+    ----------
+    input : torch tensor with 3 channels
+        the input tensor to process
+    mean : numpy array of shape (3,)
+        the channel-wise mean of the dataloader
+    std : numpy array of shape (3,)
+        the channel-wise standard deviation of the dataloader
+
+    Returns
+    -------
+    denorm : numpy array with 3 channels
+        the denormalized image
+    &#34;&#34;&#34;
+
+    sample_image = input.numpy().transpose(1, 2, 0)
+    denorm = denormalize(sample_image, mean, std)
+    return deorm</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.network_has_converged"><code class="name flex">
+<span>def <span class="ident">network_has_converged</span></span>(<span>loss, e)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Determine if n1 and n2 are almost equal, at a tolerance e.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>loss</code></strong> :&ensp;<code>list</code> of <code>floats</code></dt>
+<dd>the list of losses during training</dd>
+<dt><strong><code>e</code></strong> :&ensp;<code>float</code></dt>
+<dd>the tolerance for the stopping criterion</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>converged</code></strong> :&ensp;<code>bool</code></dt>
+<dd>whether or not training has converged</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def network_has_converged(loss, e):
+    &#34;&#34;&#34; Determine if n1 and n2 are almost equal, at a tolerance e.
+
+    Parameters
+    ----------
+    loss : list of floats
+        the list of losses during training
+    e : float
+        the tolerance for the stopping criterion
+
+    Returns
+    -------
+    converged : bool
+        whether or not training has converged
+    &#34;&#34;&#34;
+
+    if (len(loss) &lt; 3):
+        converged = False
+    else:
+        converged = (almost_equal(loss[-3], loss[-2], e) and
+            almost_equal(loss[-3], loss[-1], e) )
+    return converged</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.plot_training"><code class="name flex">
+<span>def <span class="ident">plot_training</span></span>(<span>train_loss, val_loss, train_accuracy, val_accuracy)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Plot the training loss and accuracy of the network on the training and validation set.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>train_loss</code></strong> :&ensp;<code>list</code> of <code>floats</code></dt>
+<dd>the loss on the training set</dd>
+<dt><strong><code>val_loss</code></strong> :&ensp;<code>list</code> of <code>floats</code></dt>
+<dd>the loss on the validation set</dd>
+</dl>
+<p>train_accuracy : float between 0. and 100.
+the accuracy on the training set
+val_accuracy : float between 0. and 100.
+the accuracy on the validations set</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
+    &#34;&#34;&#34; Plot the training loss and accuracy of the network on the training and validation set.
+
+    Parameters
+    ----------
+    train_loss : list of floats
+        the loss on the training set
+    val_loss : list of floats
+        the loss on the validation set
+    train_accuracy : float between 0. and 100.
+        the accuracy on the training set
+    val_accuracy : float between 0. and 100.
+        the accuracy on the validations set
+    &#34;&#34;&#34;
+
+    fig, (ax1, ax2) = plt.subplots(1,2, figsize = (10,5))
+    x_scale = np.linspace(0, len(train_loss)- 1, len(train_loss) )
+    _ = ax1.plot(x_scale, train_loss)
+    _ = ax1.plot(x_scale, val_loss)
+    ax1.legend([&#34;Loss on the training set&#34;, &#34;Loss on the validation set&#34;])
+    ax1.set_xlabel(&#34;Number of generations&#34;)
+    ax1.set_ylabel(&#34;Evaluation of the loss function&#34;)
+
+    x_scale = np.linspace(0, len(train_accuracy)- 1, len(train_accuracy) )
+    _ = ax2.plot(x_scale, train_accuracy)
+    _ = ax2.plot(x_scale, val_accuracy)
+    ax2.legend([&#34;Training accuracy&#34;, &#34;Validation accuracy&#34;])
+    ax2.set_xlabel(&#34;Number of generations&#34;)
+    ax2.set_ylabel(&#34;Accuracy &#34;)</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.test"><code class="name flex">
+<span>def <span class="ident">test</span></span>(<span>net, loader)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Confront the network to the testing set.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>net</code></strong> :&ensp;<code>torch.nn.Module</code> or <code>subclass</code></dt>
+<dd>the network to test</dd>
+<dt><strong><code>loader</code></strong> :&ensp;<code>torch.utils.data.DataLoader</code></dt>
+<dd>the testing dataloader</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>wrong_im</code></strong> :&ensp;<code>list</code> of <code>torch tensors</code></dt>
+<dd>inputs classified wrongly</dd>
+<dt><strong><code>wrong_label</code></strong> :&ensp;<code>list</code> of <code>ints ({0,1})</code></dt>
+<dd>corresponding labels</dd>
+<dt><strong><code>wrong_label</code></strong> :&ensp;<code>list</code> of <code>ints ({0,1})</code></dt>
+<dd>corresponding predictions (redundant)</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def test(net, loader):
+    &#34;&#34;&#34; Confront the network to the testing set.
+
+    Parameters
+    ----------
+    net : torch.nn.Module or subclass
+        the network to test
+    loader : torch.utils.data.DataLoader
+        the testing dataloader
+
+    Returns
+    -------
+    wrong_im : list of torch tensors
+        inputs classified wrongly
+    wrong_label : list of ints ({0,1})
+        corresponding labels
+    wrong_label : list of ints ({0,1})
+        corresponding predictions (redundant)
+    &#34;&#34;&#34;
+
+    correct = 0
+    total = 0
+    wrong_im = []
+    wrong_label = []
+    wrongly_predicted_label = []
+
+    with torch.no_grad():
+        for data in loader:
+            images, labels = data
+
+            outputs = net(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+            k = 0
+            for truth in (predicted == labels):
+                if not truth:
+                    wrong_im.append(images[k])
+                    wrong_label.append(int(labels[k]))
+                    wrongly_predicted_label.append(int(predicted[k]))
+                k += 1
+
+    print(&#34;Accuracy of the network on the &#34; + str(total) + &#39; test images: %.3f %%&#39; % (
+            100 * correct / total))
+
+    print(&#34;Number of mistakes : &#34; + str(total - correct))
+    return wrong_im, wrong_label, wrongly_predicted_label</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.train"><code class="name flex">
+<span>def <span class="ident">train</span></span>(<span>net, optimizer, criterion, max_epochs, dataloader, valloader)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Train a CNN.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>net</code></strong> :&ensp;<code>torch.nn.Module</code> or <code>subclass</code></dt>
+<dd>the network to test</dd>
+<dt><strong><code>optimizer</code></strong> :&ensp;<code>instance</code> of <code>a torch.optim class</code></dt>
+<dd>the optimizer for the CNN</dd>
+<dt><strong><code>criterion</code></strong> :&ensp;<code>torch.nn loss function</code></dt>
+<dd>the loss function criterion</dd>
+<dt><strong><code>max_epochs</code></strong> :&ensp;<code>int</code></dt>
+<dd>maximum number of epochs before terminating training early</dd>
+<dt><strong><code>dataloader</code></strong> :&ensp;<code>torch.utils.data.DataLoader</code></dt>
+<dd>dataloader for the training set</dd>
+<dt><strong><code>valloader</code></strong> :&ensp;<code>torch.utils.data.DataLoader</code></dt>
+<dd>dataloader for the validation set</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>train_loss</code></strong> :&ensp;<code>list</code> of <code>floats</code></dt>
+<dd>the loss on the training set</dd>
+<dt><strong><code>val_loss</code></strong> :&ensp;<code>list</code> of <code>floats</code></dt>
+<dd>the loss on the validation set</dd>
+</dl>
+<p>train_accuracy : float between 0. and 100.
+the accuracy on the training set
+val_accuracy : float between 0. and 100.
+the accuracy on the validations set</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def train(net, optimizer, criterion, max_epochs, dataloader, valloader ):
+    &#34;&#34;&#34; Train a CNN.
+
+    Parameters
+    ----------
+    net : torch.nn.Module or subclass
+        the network to test
+    optimizer : instance of a torch.optim class
+        the optimizer for the CNN
+    criterion : torch.nn loss function
+        the loss function criterion
+    max_epochs : int
+        maximum number of epochs before terminating training early
+    dataloader : torch.utils.data.DataLoader
+        dataloader for the training set
+    valloader : torch.utils.data.DataLoader
+        dataloader for the validation set
+
+
+    Returns
+    -------
+    train_loss : list of floats
+        the loss on the training set
+    val_loss : list of floats
+        the loss on the validation set
+    train_accuracy : float between 0. and 100.
+        the accuracy on the training set
+    val_accuracy : float between 0. and 100.
+        the accuracy on the validations set
+    &#34;&#34;&#34;
+
+    converged = False
+    epsilon = 0.0001
+    train_loss, val_loss, train_accuracy, val_accuracy = [], [], [], []
+    for epoch in range(max_epochs):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        if not converged:
+            for i, data in enumerate(dataloader, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                inputs, labels = data
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+
+                loss.backward()
+                optimizer.step()
+
+                # plot loss
+                running_loss += loss.item()
+
+            train_loss.append(running_loss / len(dataloader.dataset))
+            train_accuracy.append(training_accuracy(net, dataloader))
+            A, L = validation_stats(net, valloader, criterion)
+            val_loss.append(L)
+            val_accuracy.append(A)
+
+            print(&#39;Generation %d. training loss: %.4f,&#39;
+                  % (epoch + 1, train_loss[-1]), end=&#34;&#34;)
+            print(&#34; training accuracy: %.2f &#34; % (train_accuracy[-1]), end=&#34;%,&#34;)
+            print(&#34; validation loss: %.4f,&#34; % (val_loss[-1]), end=&#34; &#34;)
+            print(&#34; validation accuracy: %.2f &#34; % (val_accuracy[-1]), end=&#34;% \n&#34;)
+
+            converged = network_has_converged(train_loss, epsilon)
+
+    if (converged):
+        print(&#34;Network has converged.&#34;)
+    else:
+        print(&#34;Network hasn&#39;t been able to converge in &#34; + str(max_epochs) + &#34; generations.&#34;)
+    return train_loss, val_loss, train_accuracy, val_accuracy</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.training_accuracy"><code class="name flex">
+<span>def <span class="ident">training_accuracy</span></span>(<span>network, loader)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Determine the accuracy of the predictions of a network.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>network</code></strong> :&ensp;<code>torch.nn.Module</code> or <code>subclass</code></dt>
+<dd>the network to test</dd>
+<dt><strong><code>loader</code></strong> :&ensp;<code>torch.utils.data.DataLoader</code></dt>
+<dd>the training dataloader</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>accuracy : float betwee 0. and 100.
+the training accuracy</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def training_accuracy(network, loader):
+    &#34;&#34;&#34; Determine the accuracy of the predictions of a network.
+
+    Parameters
+    ----------
+    network : torch.nn.Module or subclass
+        the network to test
+    loader : torch.utils.data.DataLoader
+        the training dataloader
+
+    Returns
+    -------
+    accuracy : float betwee 0. and 100.
+        the training accuracy
+    &#34;&#34;&#34;
+
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for data in loader:
+            images, labels = data
+            outputs = network(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    accuracy = 100 * correct/total
+    return accuracy</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.validation_stats"><code class="name flex">
+<span>def <span class="ident">validation_stats</span></span>(<span>network, loader, criterion)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Judge the training of the network on the validation set.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>network</code></strong> :&ensp;<code>torch.nn.Module</code> or <code>subclass</code></dt>
+<dd>the network to test</dd>
+<dt><strong><code>loader</code></strong> :&ensp;<code>torch.utils.data.DataLoader</code></dt>
+<dd>the validation dataloader</dd>
+<dt><strong><code>criterion</code></strong> :&ensp;<code>torch.nn loss function</code></dt>
+<dd>the loss function criterion</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt>accuracy : float between 0. and 100.</dt>
+<dt>the validation accuracy</dt>
+<dt><strong><code>normalized_loss</code></strong> :&ensp;<code>float</code></dt>
+<dd>the loss per input</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def validation_stats(network, loader, criterion):
+    &#34;&#34;&#34; Judge the training of the network on the validation set.
+
+    Parameters
+    ----------
+    network : torch.nn.Module or subclass
+        the network to test
+    loader : torch.utils.data.DataLoader
+        the validation dataloader
+    criterion : torch.nn loss function
+        the loss function criterion
+
+    Returns
+    -------
+    accuracy : float between 0. and 100.
+        the validation accuracy
+    normalized_loss : float
+        the loss per input
+    &#34;&#34;&#34;
+
+    total_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in loader:
+          images, labels = data
+          outputs = network(images)
+          _, predicted = torch.max(outputs.data, 1)
+          total += labels.size(0)
+          correct += (predicted == labels).sum().item()
+          loss = criterion(outputs, labels)
+          total_loss += loss.item()
+
+    accuracy, normalized_loss = (100 * correct/total, total_loss/len(loader.dataset))
+    return accuracy, normalized_loss</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="Utils.utils.HdNet"><code class="flex name class">
+<span>class <span class="ident">HdNet</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>CNN architecture for classifying images of 1200 pixels in width and 1000 in height.</p>
+<p>Initialize the CNN.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HdNet(nn.Module):
+    &#34;&#34;&#34; CNN architecture for classifying images of 1200 pixels in width and 1000 in height.
+        &#34;&#34;&#34;
+    def __init__(self):
+        &#34;&#34;&#34; Initialize the CNN.
+        &#34;&#34;&#34;
+
+        super(HdNet, self).__init__()
+        self.conv0 = nn.Conv2d(in_channels = 3, out_channels = 6, kernel_size = 5, stride=5)
+        self.pool0 = nn.MaxPool2d(kernel_size = 2, stride=2)
+        self.conv1 = nn.Conv2d(6, 10, 5)
+        self.pool1 = nn.MaxPool2d(2)
+        self.conv2 = nn.Conv2d(10, 16, 4)
+        self.pool2 = nn.MaxPool2d(5)
+        self.fc1 = nn.Linear(16 * 9 * 11, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 2)
+        self.drop = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        &#34;&#34;&#34; Perform forward propagation across the network.
+
+        Parameters
+        ----------
+        x : torch tensor
+            CNN input tensor images
+
+        Returns
+        -------
+        x : torch tensor
+            CNN output class labels
+        &#34;&#34;&#34;
+
+        x = F.relu(self.conv0(x))
+        x = self.pool0(x)
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+        x = self.drop(F.relu(self.fc1(x)))
+        x = self.drop(F.relu(self.fc2(x)))
+        x = self.fc3(x)
+        return x
+
+    def num_flat_features(self, x):
+        &#34;&#34;&#34; Compute the number entries of one item in a batch.
+
+        Parameters
+        ----------
+        x : torch tensor
+            batch of inputs or processed inputs
+
+        Returns
+        -------
+        num_features : int
+            number of entries in one item
+        &#34;&#34;&#34;
+
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="Utils.utils.HdNet.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Perform forward propagation across the network.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>torch tensor</code></dt>
+<dd>CNN input tensor images</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>torch tensor</code></dt>
+<dd>CNN output class labels</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, x):
+    &#34;&#34;&#34; Perform forward propagation across the network.
+
+    Parameters
+    ----------
+    x : torch tensor
+        CNN input tensor images
+
+    Returns
+    -------
+    x : torch tensor
+        CNN output class labels
+    &#34;&#34;&#34;
+
+    x = F.relu(self.conv0(x))
+    x = self.pool0(x)
+    x = F.relu(self.conv1(x))
+    x = self.pool1(x)
+    x = F.relu(self.conv2(x))
+    x = self.pool2(x)
+    x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+    x = self.drop(F.relu(self.fc1(x)))
+    x = self.drop(F.relu(self.fc2(x)))
+    x = self.fc3(x)
+    return x</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.HdNet.num_flat_features"><code class="name flex">
+<span>def <span class="ident">num_flat_features</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the number entries of one item in a batch.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>torch tensor</code></dt>
+<dd>batch of inputs or processed inputs</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>num_features</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of entries in one item</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def num_flat_features(self, x):
+    &#34;&#34;&#34; Compute the number entries of one item in a batch.
+
+    Parameters
+    ----------
+    x : torch tensor
+        batch of inputs or processed inputs
+
+    Returns
+    -------
+    num_features : int
+        number of entries in one item
+    &#34;&#34;&#34;
+
+    size = x.size()[1:]  # all dimensions except the batch dimension
+    num_features = 1
+    for s in size:
+        num_features *= s
+    return num_features</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="Utils.utils.Net"><code class="flex name class">
+<span>class <span class="ident">Net</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>CNN architecture for classifying images of 120 pixels in width and 100 in height.</p>
+<p>Initialize the CNN.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Net(nn.Module):
+    &#34;&#34;&#34; CNN architecture for classifying images of 120 pixels in width and 100 in height.
+    &#34;&#34;&#34;
+
+    def __init__(self):
+        &#34;&#34;&#34; Initialize the CNN.
+        &#34;&#34;&#34;
+
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool1 = nn.MaxPool2d(2)
+        self.conv2 = nn.Conv2d(6, 16, 4)
+        self.pool2 = nn.MaxPool2d(5)
+        self.fc1 = nn.Linear(16 * 9 * 11, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 2)
+        self.drop = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        &#34;&#34;&#34; Perform forward propagation across the network.
+
+        Parameters
+        ----------
+        x : torch tensor
+            CNN input tensor images
+
+        Returns
+        -------
+        x : torch tensor
+            CNN output class labels
+        &#34;&#34;&#34;
+
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+        x = self.drop(F.relu(self.fc1(x)))
+        x = self.drop(F.relu(self.fc2(x)))
+        x = self.fc3(x)
+        return x
+
+    def num_flat_features(self, x):
+        &#34;&#34;&#34; Compute the number entries of one item in a batch.
+
+        Parameters
+        ----------
+        x : torch tensor
+            batch of inputs or processed inputs
+
+        Returns
+        -------
+        num_features : int
+            number of entries in one item
+        &#34;&#34;&#34;
+
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="Utils.utils.Net.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Perform forward propagation across the network.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>torch tensor</code></dt>
+<dd>CNN input tensor images</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>torch tensor</code></dt>
+<dd>CNN output class labels</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, x):
+    &#34;&#34;&#34; Perform forward propagation across the network.
+
+    Parameters
+    ----------
+    x : torch tensor
+        CNN input tensor images
+
+    Returns
+    -------
+    x : torch tensor
+        CNN output class labels
+    &#34;&#34;&#34;
+
+    x = F.relu(self.conv1(x))
+    x = self.pool1(x)
+    x = F.relu(self.conv2(x))
+    x = self.pool2(x)
+    x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+    x = self.drop(F.relu(self.fc1(x)))
+    x = self.drop(F.relu(self.fc2(x)))
+    x = self.fc3(x)
+    return x</code></pre>
+</details>
+</dd>
+<dt id="Utils.utils.Net.num_flat_features"><code class="name flex">
+<span>def <span class="ident">num_flat_features</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the number entries of one item in a batch.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>torch tensor</code></dt>
+<dd>batch of inputs or processed inputs</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>num_features</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of entries in one item</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def num_flat_features(self, x):
+    &#34;&#34;&#34; Compute the number entries of one item in a batch.
+
+    Parameters
+    ----------
+    x : torch tensor
+        batch of inputs or processed inputs
+
+    Returns
+    -------
+    num_features : int
+        number of entries in one item
+    &#34;&#34;&#34;
+
+    size = x.size()[1:]  # all dimensions except the batch dimension
+    num_features = 1
+    for s in size:
+        num_features *= s
+    return num_features</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="Utils" href="index.html">Utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="Utils.utils.almost_equal" href="#Utils.utils.almost_equal">almost_equal</a></code></li>
+<li><code><a title="Utils.utils.datasetMeanStd" href="#Utils.utils.datasetMeanStd">datasetMeanStd</a></code></li>
+<li><code><a title="Utils.utils.denormalize" href="#Utils.utils.denormalize">denormalize</a></code></li>
+<li><code><a title="Utils.utils.display_image" href="#Utils.utils.display_image">display_image</a></code></li>
+<li><code><a title="Utils.utils.input2image" href="#Utils.utils.input2image">input2image</a></code></li>
+<li><code><a title="Utils.utils.network_has_converged" href="#Utils.utils.network_has_converged">network_has_converged</a></code></li>
+<li><code><a title="Utils.utils.plot_training" href="#Utils.utils.plot_training">plot_training</a></code></li>
+<li><code><a title="Utils.utils.test" href="#Utils.utils.test">test</a></code></li>
+<li><code><a title="Utils.utils.train" href="#Utils.utils.train">train</a></code></li>
+<li><code><a title="Utils.utils.training_accuracy" href="#Utils.utils.training_accuracy">training_accuracy</a></code></li>
+<li><code><a title="Utils.utils.validation_stats" href="#Utils.utils.validation_stats">validation_stats</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="Utils.utils.HdNet" href="#Utils.utils.HdNet">HdNet</a></code></h4>
+<ul class="">
+<li><code><a title="Utils.utils.HdNet.forward" href="#Utils.utils.HdNet.forward">forward</a></code></li>
+<li><code><a title="Utils.utils.HdNet.num_flat_features" href="#Utils.utils.HdNet.num_flat_features">num_flat_features</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="Utils.utils.Net" href="#Utils.utils.Net">Net</a></code></h4>
+<ul class="">
+<li><code><a title="Utils.utils.Net.forward" href="#Utils.utils.Net.forward">forward</a></code></li>
+<li><code><a title="Utils.utils.Net.num_flat_features" href="#Utils.utils.Net.num_flat_features">num_flat_features</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.3</a>.</p>
+</footer>
+</body>
+</html>
