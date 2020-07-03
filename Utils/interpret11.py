@@ -11,6 +11,22 @@ from local_modules.visualize import visualize
 
 
 def display_gradients(gradients, figure_size=(6, 5)):
+    """ Display gradients of an image towards a label.
+
+    The created figure is returned for further modifications.
+
+    Parameters
+    ----------
+    gradients : numpy array
+        computed gradients
+    figure_size : tuple of ints, optional
+
+    Returns
+    -------
+    fig : matplotlib.pyplot.figure
+        created figure to modify
+    """
+
     fig = plt.figure(figsize=(3*figure_size[0], figure_size[1]))
     ax1 = fig.add_subplot(131, title="Gradient in the red channel")
     ax2 = fig.add_subplot(132, title="Gradient in the green channel")
@@ -22,6 +38,18 @@ def display_gradients(gradients, figure_size=(6, 5)):
 
 
 def shap_exp(e, inp, img):
+    """ Compute the explanation with SHAP and show it.
+
+    Parameters
+    ----------
+    e : SHAP explainer object
+        the explanation model
+    inp : torch tensor
+        the input to the model (should have requires_grad = False)
+    img : numpy array
+        the image corresponding to the input
+    """
+
     shapley_values, indexes = e.shap_values(inp, ranked_outputs=2, nsamples=200)
     shapley_values = [np.swapaxes(np.swapaxes(s, 2, 3), 1, -1) for s in shapley_values]
 
@@ -42,6 +70,24 @@ def shap_exp(e, inp, img):
 
 
 def gradcam_exp(gradcam, gradcam_pp, inp, image, layer_name, f_size):
+    """ Compute the explanations obtained with GradCAM and GradCAM++ before showing them.
+
+    Parameters
+    ----------
+    gradcam : GradCAM object
+        the GradCAM explanation model
+    gradcam_pp : GradCAMpp object
+        the GradCAM++ explanation model
+    inp : torch tensor
+        the input to the model (should have requires_grad = False)
+    image : numpy array
+        the image corresponding to the input
+    layer_name : string
+        name of the layer analyzed
+    f_size : tuple of ints
+        size of each figure in the matplotlib.pyplot.figure object
+    """
+
     mask, _ = gradcam(inp)
     heatmap, result = visualize_cam(mask, inp)
     mask_pp, _ = gradcam_pp(inp)
@@ -63,13 +109,25 @@ def gradcam_exp(gradcam, gradcam_pp, inp, image, layer_name, f_size):
     fig.suptitle("With respect to %s" % layer_name, size="xx-large")
 
 
-def smooth_exp(inp, image, wrapped): 
-  fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(20,20))
-  titles = ["GradCAM","GradCAM++","SmoothGradCAM++"]
-  for i in range(len(wrapped)):
-    cam, idx = wrapped[i](inp)
-    heatmap = visualize(image.unsqueeze(0), cam)
-    hm = (heatmap.squeeze().detach().numpy().transpose(1, 2, 0))
-    ax[0][i].imshow(cam.squeeze().numpy(), alpha=0.5, cmap='jet')
-    ax[1][i].imshow(hm)
-    ax[1][i].set_title(titles[i])
+def smooth_exp(inp, image, wrapped):
+    """ Compute the explanation with SmoothCAM and show it.
+
+    Parameters
+    ----------
+    inp : torch tensor
+        the input to the model (should have requires_grad = False)
+    image : numpy array
+        the image corresponding to the input
+    wrapped : GradCAM, GradCAMpp or SmoothGradCAMpp object from SmoothGradCAM
+        the explanation method
+    """
+
+    fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(20,20))
+    titles = ["GradCAM","GradCAM++","SmoothGradCAM++"]
+    for i in range(len(wrapped)):
+        cam, idx = wrapped[i](inp)
+        heatmap = visualize(image.unsqueeze(0), cam)
+        hm = (heatmap.squeeze().detach().numpy().transpose(1, 2, 0))
+        ax[0][i].imshow(cam.squeeze().numpy(), alpha=0.5, cmap='jet')
+        ax[1][i].imshow(hm)
+        ax[1][i].set_title(titles[i])
