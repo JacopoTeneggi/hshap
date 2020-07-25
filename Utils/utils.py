@@ -76,9 +76,9 @@ def input2image(input, mean, std):
 
     sample_image = input.numpy().transpose(1, 2, 0)
     denorm = denormalize(sample_image, mean, std)
-    return deorm
+    return denorm
 
-def display_image(im, true_label, predicted_label=None, figure_size = (8, 5))
+def display_image(im, true_label, predicted_label=None, figure_size = (8, 5)):
     """ Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
 
     Parameters
