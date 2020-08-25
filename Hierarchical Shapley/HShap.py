@@ -4,7 +4,7 @@ from itertools import permutations
 from functools import reduce
 
 
-class HierarchicalSHAPNode:
+class Node:
     """
     Represents the single feature
     """
@@ -159,7 +159,7 @@ class HierarchicalSHAPNode:
         return children
 
 
-class HierarchicalSHAPExplainer:
+class Explainer:
 
     def __init__(self, model, background, M=4):
         self.model = model
@@ -201,7 +201,7 @@ class HierarchicalSHAPExplainer:
     def explain(self, input, background, label=None, threshold=0, minW=2, minH=2):
         self.computed = 0
         self.rejected = 0
-        mainNode = HierarchicalSHAPNode(
+        mainNode = Node(
             self, 0, 4, self.features, self.masks, score=1)
         nodes = mainNode.nodeScores(
             input, background, label, threshold, minW, minH)
