@@ -152,7 +152,7 @@ class Node:
             childPath = np.array([self.str2mask(keys[relevantIndex])])
             if self.path is not None:
                 childPath = np.concatenate((self.path, childPath))
-            child = HierarchicalSHAPNode(self.explainer, self.depth + 1, self.M,
+            child = Node(self.explainer, self.depth + 1, self.M,
                                          self.features, self.masks, path=childPath, score=values[relevantIndex])
             children.append(child.nodeScores(
                 input, background, label, threshold, minW, minH))
@@ -161,7 +161,7 @@ class Node:
 
 class Explainer:
 
-    def __init__(self, model, background, M=4):
+    def __init__(self, model, background, M = 4):
         self.model = model
         self.computed = None
         self.rejected = None
@@ -198,13 +198,13 @@ class Explainer:
         nodeArea = (endRow + 1 - startRow) * (endColumn + 1 - startColumn)
         map[startRow:endRow+1, startColumn:endColumn+1] = node.score / nodeArea
 
-    def explain(self, input, background, label=None, threshold=0, minW=2, minH=2):
+    def explain(self, input, label=None, threshold = 0, minW = 2, minH = 2):
         self.computed = 0
         self.rejected = 0
         mainNode = Node(
             self, 0, 4, self.features, self.masks, score=1)
         nodes = mainNode.nodeScores(
-            input, background, label, threshold, minW, minH)
+            input, self.background, label, threshold, minW, minH)
         flatnodes = list(self.flatten(nodes))
         saliency_map = np.zeros((100, 120))
         for node in flatnodes:
