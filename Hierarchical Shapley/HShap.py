@@ -65,7 +65,7 @@ class Node:
                     startColumn += w / 2
         return int(startRow), int(endRow), int(startColumn), int(endColumn)
 
-    def maskInput(self, mask, rootInput, startRow, endRow, startColumn, endColumn, background):
+    def maskInput(self, mask, rootInput, startRow, endRow, startColumn, endColumn):
         w = endColumn - startColumn
         h = endRow - startRow
         if (type(rootInput) == np.ndarray):
@@ -98,13 +98,13 @@ class Node:
             maskEndRow = int(maskEndRow)
             maskStartColumn = int(maskStartColumn)
             maskEndColumn = int(maskEndColumn)
-            maskedInput[:, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn] = background[:,
+            maskedInput[:, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn] = self.explainer.background[:,
                                                                                                 maskStartRow:maskEndRow, maskStartColumn:maskEndColumn]
         if (type(maskedInput) is not np.ndarray):
             maskedInput = maskedInput.view(-1, 3, self.explainer.h, self.explainer.w)
         return maskedInput
 
-    def rootPathInput(self, path, input, background,):
+    def rootPathInput(self, path, input, background):
         startRow, endRow, startColumn, endColumn = self.pathMaskCoordinates(
             path, 0, self.explainer.h, 0, self.explainer.w)
         if (type(background) == np.ndarray):
@@ -115,10 +115,10 @@ class Node:
                   1] = input[:, startRow:endRow+1, startColumn:endColumn+1]
         return rootInput, startRow, endRow, startColumn, endColumn
 
-    def nodeScores(self, input, background, label, threshold, minW, minH):
+    def nodeScores(self, input, label, threshold, minW, minH):
         #
         rootInput, startRow, endRow, startColumn, endColumn = self.rootPathInput(
-            self.path, input, background)
+            self.path, input, self.explainer.background)
         rootw = endColumn - startColumn
         rooth = endRow - startRow
         # Stop when it reaches the deepest layer and return current node
@@ -126,7 +126,7 @@ class Node:
             return self
         # If not, go down another level and compute shap coefficients for features
         predictions = {self.mask2str(mask): self.explainer.model(self.maskInput(
-            mask, rootInput, startRow, endRow, startColumn, endColumn, background))[:, label] for mask in self.masks}
+            mask, rootInput, startRow, endRow, startColumn, endColumn))[:, label] for mask in self.masks}
         phis = {self.mask2str(feature): self.computeShap(
             feature, predictions) for feature in self.features}
 
@@ -155,7 +155,7 @@ class Node:
             child = Node(self.explainer, self.depth + 1, self.M,
                          self.features, self.masks, path=childPath, score=values[relevantIndex])
             children.append(child.nodeScores(
-                input, background, label, threshold, minW, minH))
+                input, label, threshold, minW, minH))
         return children
 
 
@@ -165,13 +165,10 @@ class Explainer:
         self.model = model
         self.computed = None
         self.rejected = None
-        self.h = background.shape[1]
-        self.w = background.shape[2]
-        self.M = M
-        self.MEAN = np.array([0.5, 0.5, 0.5])
-        self.STD = np.array([0.5, 0.5, 0.5])
-        self.input = input
         self.background = background
+        self.h = self.background.shape[1]
+        self.w = self.background.shape[2]
+        self.M = M
         self.masks = self.generateMasks()
         self.features = np.identity(
             self.M, dtype=np.bool).reshape((self.M, self.M))
@@ -196,7 +193,7 @@ class Explainer:
 
     def addNodeMask(self, node, map):
         startRow, endRow, startColumn, endColumn = node.pathMaskCoordinates(
-            node.path)
+            node.path, 0, self.h, 0, self.w)
         nodeArea = (endRow + 1 - startRow) * (endColumn + 1 - startColumn)
         map[startRow:endRow+1, startColumn:endColumn+1] = node.score / nodeArea
 
@@ -206,7 +203,7 @@ class Explainer:
         mainNode = Node(
             self, 0, 4, self.features, self.masks, score=1)
         nodes = mainNode.nodeScores(
-            input, self.background, label, threshold, minW, minH)
+            input, label, threshold, minW, minH)
         flatnodes = list(self.flatten(nodes))
         saliency_map = np.zeros((self.h, self.w))
         for node in flatnodes:
