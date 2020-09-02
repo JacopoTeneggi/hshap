@@ -45,7 +45,7 @@ class Node:
             mask[i] = int(string[i])
         return mask
 
-    def pathMaskCoordinates(self, path, startRow=0, endRow=100, startColumn=0, endColumn=120):
+    def pathMaskCoordinates(self, path, startRow, endRow, startColumn, endColumn):
         if path is not None:
             for layer in path:
                 w = endColumn - startColumn
@@ -101,12 +101,12 @@ class Node:
             maskedInput[:, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn] = background[:,
                                                                                                 maskStartRow:maskEndRow, maskStartColumn:maskEndColumn]
         if (type(maskedInput) is not np.ndarray):
-            maskedInput = maskedInput.view(-1, 3, 100, 120)
+            maskedInput = maskedInput.view(-1, 3, self.explainer.h, self.explainer.w)
         return maskedInput
 
-    def rootPathInput(self, path, input, background, w=120, h=100):
+    def rootPathInput(self, path, input, background,):
         startRow, endRow, startColumn, endColumn = self.pathMaskCoordinates(
-            path, 0, h, 0, w)
+            path, 0, self.explainer.h, 0, self.explainer.w)
         if (type(background) == np.ndarray):
             rootInput = background.copy()
         else:
@@ -153,7 +153,7 @@ class Node:
             if self.path is not None:
                 childPath = np.concatenate((self.path, childPath))
             child = Node(self.explainer, self.depth + 1, self.M,
-                                         self.features, self.masks, path=childPath, score=values[relevantIndex])
+                         self.features, self.masks, path=childPath, score=values[relevantIndex])
             children.append(child.nodeScores(
                 input, background, label, threshold, minW, minH))
         return children
@@ -161,10 +161,12 @@ class Node:
 
 class Explainer:
 
-    def __init__(self, model, background, M = 4):
+    def __init__(self, model, background, M=4):
         self.model = model
         self.computed = None
         self.rejected = None
+        self.h = background.shape[1]
+        self.w = background.shape[2]
         self.M = M
         self.MEAN = np.array([0.5, 0.5, 0.5])
         self.STD = np.array([0.5, 0.5, 0.5])
@@ -198,7 +200,7 @@ class Explainer:
         nodeArea = (endRow + 1 - startRow) * (endColumn + 1 - startColumn)
         map[startRow:endRow+1, startColumn:endColumn+1] = node.score / nodeArea
 
-    def explain(self, input, label=None, threshold = 0, minW = 2, minH = 2):
+    def explain(self, input, label=None, threshold=0, minW=2, minH=2):
         self.computed = 0
         self.rejected = 0
         mainNode = Node(
@@ -206,7 +208,7 @@ class Explainer:
         nodes = mainNode.nodeScores(
             input, self.background, label, threshold, minW, minH)
         flatnodes = list(self.flatten(nodes))
-        saliency_map = np.zeros((100, 120))
+        saliency_map = np.zeros((self.h, self.w))
         for node in flatnodes:
             self.addNodeMask(node, saliency_map)
         return saliency_map, flatnodes
