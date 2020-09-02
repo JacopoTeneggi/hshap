@@ -27,7 +27,7 @@ class Node:
         diffs = [1/comb(self.M - 1, np.sum(b)) * (predictions[self.mask2str(a)
                                                               ] - predictions[self.mask2str(b)]) for a, b in deltas]
         phi = np.sum(diffs) / self.M
-        return phi.detach().numpy()
+        return phi
 
     def mask2path(self, mask):
         if self.path is None:
@@ -119,14 +119,16 @@ class Node:
         #
         rootInput, startRow, endRow, startColumn, endColumn = self.rootPathInput(
             self.path, input, self.explainer.background)
+        print('Root input [%d, %d] [%d %d] with score %.4f' % (startRow, endRow, startColumn, endColumn, self.score))
         rootw = endColumn - startColumn
         rooth = endRow - startRow
         # Stop when it reaches the deepest layer and return current node
         if (rootw < 2*minW) or (rooth < 2*minH):
             return self
         # If not, go down another level and compute shap coefficients for features
-        predictions = {self.mask2str(mask): self.explainer.model(self.maskInput(
-            mask, rootInput, startRow, endRow, startColumn, endColumn))[:, label] for mask in self.masks}
+        outputs = {self.mask2str(mask): self.explainer.model(self.maskInput(
+            mask, rootInput, startRow, endRow, startColumn, endColumn)).detach().numpy() for mask in self.masks}
+        predictions = {self.mask2str(mask): outputs[self.mask2str(mask)][:, label] for mask in self.masks}
         phis = {self.mask2str(feature): self.computeShap(
             feature, predictions) for feature in self.features}
 
@@ -172,6 +174,7 @@ class Explainer:
         self.masks = self.generateMasks()
         self.features = np.identity(
             self.M, dtype=np.bool).reshape((self.M, self.M))
+        print('Initialized explainer with map size (%d, %d)' % (self.h, self.h))
 
     def generateMasks(self):
         # initialize masks array with all features on -> no need to compute permutations fro |S| = M
