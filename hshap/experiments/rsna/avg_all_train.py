@@ -17,21 +17,25 @@ preprocess = transforms.Compose(
         transforms.Resize(299),
         transforms.CenterCrop(299),
         transforms.ToTensor(),
-        transforms.Normalize(mean=MEAN, std=STD)
+        transforms.Normalize(mean=MEAN, std=STD),
     ]
 )
 train_batch_size = 100
 train_data = datasets.ImageFolder(train_data_dir, transform=preprocess)
 dataloader = torch.utils.data.DataLoader(
-    train_data, batch_size=train_batch_size, shuffle=False, num_workers=10, pin_memory=True
+    train_data,
+    batch_size=train_batch_size,
+    shuffle=False,
+    num_workers=10,
+    pin_memory=True,
 )
 train_loader = iter(dataloader)
 train_sum = torch.zeros((3, 299, 299))
-train_sum = train_sum.to('cuda:0')
+train_sum = train_sum.to("cuda:0")
 batch_count = 0
 for batch in train_loader:
     X, _ = batch
-    X = X.to('cuda:0')
+    X = X.to("cuda:0")
     batch_mean = torch.mean(X, dim=0)
     train_sum += batch_mean
     batch_count += 1

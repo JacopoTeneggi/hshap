@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torchvision import models, datasets, transforms
 # SYS IMPORTS
+import sys
 import re
 import os
 # HSHAP IMPORTS
@@ -15,8 +16,17 @@ import shap
 from gradcam.utils import visualize_cam
 from gradcam import GradCAM, GradCAMpp
 
+# READ ARGVS:
+argvs = sys.argv
+HOME = str(argvs[1])
+EXP_SIZE = int(argvs[2])
+REF_SIZE_I = int(argvs[3])
+REF_SIZES = [100, 200, 400, 800, 1600]
+REF_SIZE = REF_SIZES[REF_SIZE_I]
+MIN_SIZE = int(argvs[4])
+print(HOME, EXP_SIZE, REF_SIZE, MIN_SIZE)
+
 # DEFINE GLOBAL CONSTANTS
-HOME = '/home/jacopo'
 MEAN, STD = np.array([0.485, 0.456, 0.406]), np.array([0.299, 0.224, 0.225])
 DATA_DIR = os.path.join(HOME, "repo/hshap/data/rsna/datasets")
 
@@ -50,23 +60,23 @@ preprocess = transforms.Compose(
     ]
 )
 
-batch_size = 900
+batch_size = REF_SIZE
 train_data = datasets.ImageFolder(TRAIN_DATA_DIR, transform=preprocess)
 dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers = 0)
 train_loader = iter(dataloader)
 X, _ = next(train_loader)
 X = X.detach().to(device)
-# ref = torch.mean(X, axis=0)
+ref = torch.mean(X, axis=0)
 print("Loaded reference batch for shap methods")
 
 # INITIALIZE EXPLAINERS
 gradexp = shap.GradientExplainer(model, X)
 deepexp = shap.DeepExplainer(model, X)
 # LOAD HSHAP REFERENCE
-REFERENCE_PATH = os.path.join(HOME, "repo/hshap/data/rsna/references/avg_all_train.npy")
-print("Loaded reference for hshap")
-np_ref = np.load(REFERENCE_PATH)
-ref = torch.from_numpy(np_ref).to(device)
+# REFERENCE_PATH = os.path.join(HOME, "repo/hshap/data/rsna/references/avg_all_train.npy")
+# print("Loaded reference for hshap")
+# np_ref = np.load(REFERENCE_PATH)
+# ref = torch.from_numpy(np_ref).to(device)
 hexp = hshap.src.Explainer(model, ref)
 # DEFINE CAMS (take the last but conv layer)
 gradcam = GradCAM(model, model.Mixed_7c)
@@ -113,9 +123,10 @@ explainers_L = len(explainer_dictionary) # number of explainers
 last_added = np.zeros((explainers_L), dtype=np.uint16)
 
 # LOAD SICK IMAGES FOR EXPERIMENT
-exp_img_dataset = hshap.utils.RSNASickDataset(os.path.join(DATA_DIR, "test/sick"), preprocess)
-exp_size = 300
-exp_img_loader = torch.utils.data.DataLoader(exp_img_dataset, batch_size=exp_size, shuffle=True, num_workers=0)
+EXP_DIR = os.path.join(HOME, "repo/hshap/data/rsna/LOR/datasets/{}".format(EXP_SIZE))
+exp_img_dataset = hshap.utils.RSNASickDataset(EXP_DIR, preprocess)
+exp_size = EXP_SIZE
+exp_img_loader = torch.utils.data.DataLoader(exp_img_dataset, batch_size=exp_size, num_workers=0)
 exp_iter = iter(exp_img_loader)
 exp_imgs = next(exp_iter)
 exp_imgs = exp_imgs.to(device)
@@ -166,7 +177,7 @@ for eximg_id, image in enumerate(exp_imgs):
         
         elif explainer_name == 'H-Explainer':
             threshold = 0
-            minSize = 20
+            minSize = MIN_SIZE
             label = 1
             saliency_map = explain(explainer, image, threshold=threshold, minW=minSize, minH=minSize, label=label)
 
@@ -206,4 +217,4 @@ for eximg_id, image in enumerate(exp_imgs):
         print("Saved at {}, {}".format(explainer_id, last_added[explainer_id]))   
         last_added[explainer_id] += 1
 
-np.save(os.path.join(HOME, 'repo/hshap/data/rsna/_all_900_20_20_LOR.npy'), LOR)
+np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR/results/_{}_{}_{}.npy'.format(EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR)

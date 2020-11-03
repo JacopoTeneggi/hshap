@@ -4,35 +4,41 @@ import torch.utils.data as data
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+
 # PIL IMPORT
 from PIL import Image
+
 # MATPLOTLIB IMPORT
 import matplotlib.pyplot as plt
+
 # SYS IMPORTS
 import os
 import glob
 
+
 class RSNASickDataset(data.Dataset):
     """Custom Sick RSNA Dataset"""
-    
-    def __init__(self, root_dir, transform):        
+
+    def __init__(self, root_dir, transform):
         self.root_dir = root_dir
         self.samples = glob.glob(os.path.join(root_dir, "*.png"))
         self.transform = transform
-        
+
     def __len__(self):
         return len(self.samples)
-    
+
     def __getitem__(self, index):
         path = self.samples[index]
         sample = self.loader(path)
         sample = self.transform(sample)
         return sample
-    
+
     def loader(self, path):
         from torchvision import get_image_backend
-        if get_image_backend() == 'accimage':
+
+        if get_image_backend() == "accimage":
             import accimage
+
             try:
                 return accimage.Image(path)
             except IOError:
@@ -40,13 +46,14 @@ class RSNASickDataset(data.Dataset):
                 return pil_loader(path)
         else:
             return pil_loader(path)
-        
+
+
 def pil_loader(path):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         img = Image.open(f)
-        return img.convert('RGB')
-        
+        return img.convert("RGB")
+
 
 def datasetMeanStd(loader):
     """ Computes the mean and standard deviation of a dataloader of 3 channel images
