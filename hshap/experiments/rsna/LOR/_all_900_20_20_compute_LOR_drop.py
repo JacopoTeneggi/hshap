@@ -50,23 +50,23 @@ preprocess = transforms.Compose(
     ]
 )
 
-batch_size = 100
+batch_size = 900
 train_data = datasets.ImageFolder(TRAIN_DATA_DIR, transform=preprocess)
 dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers = 0)
 train_loader = iter(dataloader)
 X, _ = next(train_loader)
 X = X.detach().to(device)
-ref = torch.mean(X, axis=0)
+# ref = torch.mean(X, axis=0)
 print("Loaded reference batch for shap methods")
 
 # INITIALIZE EXPLAINERS
 gradexp = shap.GradientExplainer(model, X)
 deepexp = shap.DeepExplainer(model, X)
 # LOAD HSHAP REFERENCE
-# REFERENCE_PATH = os.path.join(HOME, "repo/hshap/data/rsna/references/avg_all_train.npy")
-# print("Loaded reference for hshap")
-# np_ref = np.load(REFERENCE_PATH)
-# ref = torch.from_numpy(np_ref).to(device)
+REFERENCE_PATH = os.path.join(HOME, "repo/hshap/data/rsna/references/avg_all_train.npy")
+print("Loaded reference for hshap")
+np_ref = np.load(REFERENCE_PATH)
+ref = torch.from_numpy(np_ref).to(device)
 hexp = hshap.src.Explainer(model, ref)
 # DEFINE CAMS (take the last but conv layer)
 gradcam = GradCAM(model, model.Mixed_7c)
@@ -114,7 +114,7 @@ last_added = np.zeros((explainers_L), dtype=np.uint16)
 
 # LOAD SICK IMAGES FOR EXPERIMENT
 exp_img_dataset = hshap.utils.RSNASickDataset(os.path.join(DATA_DIR, "test/sick"), preprocess)
-exp_size = 100
+exp_size = 300
 exp_img_loader = torch.utils.data.DataLoader(exp_img_dataset, batch_size=exp_size, shuffle=True, num_workers=0)
 exp_iter = iter(exp_img_loader)
 exp_imgs = next(exp_iter)
@@ -135,7 +135,8 @@ print("Loaded {} images".format(exp_imgs_L))
 print("----------")
 
 # DEFINE PERTURBATION SIZES
-perturbation_sizes = np.linspace(.10, 1, 10)
+exp_x = np.linspace(-1, 0, 20)
+perturbation_sizes = np.sort(1.1 - 10**(exp_x))
 perturbations_L = len(perturbation_sizes)
 LOR = np.zeros((explainers_L, exp_imgs_L, perturbations_L))
 
@@ -165,7 +166,7 @@ for eximg_id, image in enumerate(exp_imgs):
         
         elif explainer_name == 'H-Explainer':
             threshold = 0
-            minSize = 10
+            minSize = 20
             label = 1
             saliency_map = explain(explainer, image, threshold=threshold, minW=minSize, minH=minSize, label=label)
 
@@ -205,4 +206,4 @@ for eximg_id, image in enumerate(exp_imgs):
         print("Saved at {}, {}".format(explainer_id, last_added[explainer_id]))   
         last_added[explainer_id] += 1
 
-np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR_same_baseline.npy'), LOR)
+np.save(os.path.join(HOME, 'repo/hshap/data/rsna/_all_900_20_20_LOR.npy'), LOR)

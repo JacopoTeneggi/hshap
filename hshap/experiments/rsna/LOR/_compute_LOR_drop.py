@@ -135,7 +135,8 @@ print("Loaded {} images".format(exp_imgs_L))
 print("----------")
 
 # DEFINE PERTURBATION SIZES
-perturbation_sizes = np.linspace(.10, 1, 10)
+exp_x = np.linspace(-1, 0, 20)
+perturbation_sizes = np.sort(1.1 - 10**(exp_x))
 perturbations_L = len(perturbation_sizes)
 LOR = np.zeros((explainers_L, exp_imgs_L, perturbations_L))
 
