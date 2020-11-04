@@ -20,9 +20,7 @@ from gradcam import GradCAM, GradCAMpp
 argvs = sys.argv
 HOME = str(argvs[1])
 EXP_SIZE = int(argvs[2])
-REF_SIZE_I = int(argvs[3])
-REF_SIZES = [100, 200, 400, 800, 1600]
-REF_SIZE = REF_SIZES[REF_SIZE_I]
+REF_SIZE = int(argvs[3])
 MIN_SIZE = int(argvs[4])
 print(HOME, EXP_SIZE, REF_SIZE, MIN_SIZE)
 
