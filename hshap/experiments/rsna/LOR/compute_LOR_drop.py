@@ -8,6 +8,7 @@ from torchvision import models, datasets, transforms
 import sys
 import re
 import os
+import time
 # HSHAP IMPORTS
 import hshap
 # SHAP IMPORTS
@@ -29,7 +30,7 @@ MEAN, STD = np.array([0.485, 0.456, 0.406]), np.array([0.299, 0.224, 0.225])
 DATA_DIR = os.path.join(HOME, "repo/hshap/data/rsna/datasets")
 
 # DEFINE DEVICE
-_device = "cpu"
+_device = "cuda:0"
 device = torch.device(_device)
 torch.cuda.empty_cache()
 print("Current device is {}".format(device))
@@ -101,12 +102,12 @@ def hexp_explain(hexp, image, threshold, minW, minH, label=1):
 
 def gradcam_explain(gradcam, input):
     mask, _ = gradcam(input)
-    gradcam_saliency = mask.detach().squeeze().numpy()
+    gradcam_saliency = mask.cpu().detach().squeeze().numpy()
     return gradcam_saliency
 
 def gradcampp_explain(gradcampp, input):
     maskpp, _ = gradcampp(input)
-    gradcampp_saliency = maskpp.detach().squeeze().numpy()
+    gradcampp_saliency = maskpp.cpu().detach().squeeze().numpy()
     return gradcampp_saliency
 
 # INITIALIZE EXPLAINERS DICTIONARY
@@ -147,16 +148,19 @@ print("----------")
 exp_x = np.linspace(-1, 0, 20)
 perturbation_sizes = np.sort(1.1 - 10**(exp_x))
 perturbations_L = len(perturbation_sizes)
-LOR = np.zeros((explainers_L, exp_imgs_L, perturbations_L))
+LOR = torch.zeros((explainers_L, exp_imgs_L, perturbations_L)).to(device)
 
 # FOR EACH IMAGE
 for eximg_id, image in enumerate(exp_imgs):
     
     print('Analyzing image #%d' % (eximg_id + 1))
+    img_t0 = time.time()
     input = image.view(-1, 3, 299, 299).detach()
     # id_match = re.search("ex\d*_(\d*).png", image_name)
     # id = int(id_match.group(1))
 
+    # DEFINE SALIENCY MAPS BATCH
+    exp_batch = np.zeros((explainers_L, 299, 299))
     # FOR EACH EXPLAINER
     for explainer_id in explainer_dictionary:
         # READ EXPLAINER
@@ -164,7 +168,9 @@ for eximg_id, image in enumerate(exp_imgs):
         explainer = explainer_dictionary[explainer_id]['exp']
         explain = explainer_dictionary[explainer_id]['explain']
 
+        
         # COMPUTE SALIENCY MAPS
+        exp_t0 = time.time()
         if explainer_name == 'Grad-Explainer':
             torch.cuda.empty_cache()
             saliency_map = explain(explainer, input)
@@ -174,14 +180,19 @@ for eximg_id, image in enumerate(exp_imgs):
             saliency_map = explain(explainer, input)
         
         elif explainer_name == 'H-Explainer':
+            torch.cuda.empty_cache()
             threshold = 0
             minSize = MIN_SIZE
             label = 1
             saliency_map = explain(explainer, image, threshold=threshold, minW=minSize, minH=minSize, label=label)
 
         elif explainer_name == 'GradCAM' or explainer_name == 'GradCAM++':
+            torch.cuda.empty_cache()
             saliency_map = explain(explainer, input)
-
+            
+        exp_batch[explainer_id] = saliency_map
+        print("Explanation time for %s %.3f" % (explainer_name, time.time() - exp_t0))
+    
         activation_threshold = 0
         salient_points = np.where(saliency_map > activation_threshold)
         salient_rows = salient_points[0]
@@ -189,10 +200,22 @@ for eximg_id, image in enumerate(exp_imgs):
         L = len(salient_rows)
         ids = np.arange(L)
         
-        # PERTURBATE IMAGES AND EVALUATE LOR
-        for k, perturbation_size in enumerate(perturbation_sizes):
-            print("Perturbation={}".format(perturbation_size))
-            perturbed_img = image.clone()
+    # PERTURBATE IMAGES AND EVALUATE LOR
+    activation_threshold = 0
+    for k, perturbation_size in enumerate(perturbation_sizes):
+        print("Perturbation={}".format(perturbation_size))
+        
+        # DEFINE PERTURBED INPUT BATCH
+        perturbed_batch = image.view(-1, 3, 299, 299).repeat(explainers_L, 1, 1, 1)
+        
+        for explainer_id in explainer_dictionary:
+            saliency_map = exp_batch[explainer_id]
+            salient_points = np.where(saliency_map > activation_threshold)
+            salient_rows = salient_points[0]
+            salient_columns = salient_points[1]
+            L = len(salient_rows)
+            ids = np.arange(L)
+
             perturbation_L = int(perturbation_size * L)
             perturbed_ids = np.random.choice(ids, replace = False, size = perturbation_L)
             perturbed_rows = salient_rows[perturbed_ids]
@@ -201,18 +224,16 @@ for eximg_id, image in enumerate(exp_imgs):
             for j in np.arange(perturbation_L):
                 row = perturbed_rows[j]
                 column = perturbed_columns[j]
-                perturbed_img[:, row, column] = ref[:, row, column]
+                perturbed_batch[explainer_id, :, row, column] = ref[:, row, column]
     
-            perturbed_input = perturbed_img.view(-1, 3, 299, 299)
-            prediction = model(perturbed_input).cpu().detach().numpy()[0]
+        prediction = model(perturbed_batch).detach()
+        del perturbed_batch
+        torch.cuda.empty_cache()
+        with torch.no_grad():
+            aux = torch.exp(prediction)
+            logits = torch.div(aux[:, 1], torch.sum(aux, 1))
+            logits = torch.log10(logits)
+        LOR[:, eximg_id, k] = logits
+    print("Analyzed image {} in {}s".format(eximg_id + 1, time.time() - img_t0))
 
-            logits = np.exp(prediction)/np.sum(np.exp(prediction))
-
-            if np.isnan(logits[1]):
-                logits[1] = 1
-            LOR[explainer_id, last_added[explainer_id], k] = np.log10(logits[1])
-    
-        print("Saved at {}, {}".format(explainer_id, last_added[explainer_id]))   
-        last_added[explainer_id] += 1
-
-np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR/results/_{}_{}_{}.npy'.format(EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR)
+np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR/results/_{}_{}_{}.npy'.format(EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())

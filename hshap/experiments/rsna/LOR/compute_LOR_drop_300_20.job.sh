@@ -1,4 +1,4 @@
-#SBATCH --job-name=LOR_array_300_10
+#SBATCH --job-name=LOR_array_300_20
 #SBATCH --partition=gpuk80
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks-per-node=1
@@ -11,4 +11,4 @@
 module load python/3.7
 python -m pip install -e /home-2/jtenegg1@jhu.edu/work/repo/hshap/
 
-python ./compute_LOR_drop.py "/home-2/jtenegg1@jhu.edu/work" 300 $SLURM_ARRAY_TASK_ID 10
+python ./compute_LOR_drop.py "/home-2/jtenegg1@jhu.edu/work" 300 $SLURM_ARRAY_TASK_ID 20
