@@ -69,8 +69,8 @@ ref = torch.mean(X, axis=0)
 print("Loaded reference batch for shap methods")
 
 # INITIALIZE EXPLAINERS
-gradexp = shap.GradientExplainer(model, X)
-deepexp = shap.DeepExplainer(model, X)
+# gradexp = shap.GradientExplainer(model, X)
+# deepexp = shap.DeepExplainer(model, X)
 # LOAD HSHAP REFERENCE
 # REFERENCE_PATH = os.path.join(HOME, "repo/hshap/data/rsna/references/avg_all_train.npy")
 # print("Loaded reference for hshap")
@@ -112,11 +112,11 @@ def gradcampp_explain(gradcampp, input):
 
 # INITIALIZE EXPLAINERS DICTIONARY
 explainer_dictionary = {
-  0: {'name': 'Grad-Explainer', 'exp': gradexp, 'explain': gradexp_explain },
-  1: {'name': 'Deep-Explainer', 'exp': deepexp, 'explain': deepexp_explain},
-  2: {'name': 'H-Explainer', 'exp': hexp, 'explain': hexp_explain},
-  3: {'name': 'GradCAM', 'exp': gradcam, 'explain': gradcam_explain},
-  4: {'name': 'GradCAM++', 'exp': gradcampp, 'explain': gradcampp_explain},
+  # 0: {'name': 'Grad-Explainer', 'exp': gradexp, 'explain': gradexp_explain },
+  # 1: {'name': 'Deep-Explainer', 'exp': deepexp, 'explain': deepexp_explain},
+  0: {'name': 'H-Explainer', 'exp': hexp, 'explain': hexp_explain},
+  1: {'name': 'GradCAM', 'exp': gradcam, 'explain': gradcam_explain},
+  2: {'name': 'GradCAM++', 'exp': gradcampp, 'explain': gradcampp_explain},
 }
 explainers_L = len(explainer_dictionary) # number of explainers
 last_added = np.zeros((explainers_L), dtype=np.uint16)

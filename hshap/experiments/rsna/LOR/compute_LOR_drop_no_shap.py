@@ -23,7 +23,7 @@ HOME = str(argvs[1])
 EXP_SIZE = int(argvs[2])
 REF_SIZE = int(argvs[3])
 MIN_SIZE = int(argvs[4])
-EXPL_ID = int(argvs[5])
+print(HOME, EXP_SIZE, REF_SIZE, MIN_SIZE)
 
 # DEFINE GLOBAL CONSTANTS
 MEAN, STD = np.array([0.485, 0.456, 0.406]), np.array([0.299, 0.224, 0.225])
@@ -69,22 +69,19 @@ ref = torch.mean(X, axis=0)
 print("Loaded reference batch for shap methods")
 
 # INITIALIZE EXPLAINERS
-if EXPL_ID == 0:
-    explainer = shap.GradientExplainer(model, X)
-if EXPL_ID == 1:
-    explainer = shap.DeepExplainer(model, X)
-if EXPL_ID == 2:
-    explainer = hshap.src.Explainer(model, ref)
-if EXPL_ID == 3:
-    explainer = GradCAM(model, model.Mixed_7c)
-if EXPL_ID == 4:
-    explainer = GradCAMpp(model, model.Mixed_7c)
+# gradexp = shap.GradientExplainer(model, X)
+# deepexp = shap.DeepExplainer(model, X)
 # LOAD HSHAP REFERENCE
 # REFERENCE_PATH = os.path.join(HOME, "repo/hshap/data/rsna/references/avg_all_train.npy")
 # print("Loaded reference for hshap")
 # np_ref = np.load(REFERENCE_PATH)
 # ref = torch.from_numpy(np_ref).to(device)
+hexp = hshap.src.Explainer(model, ref)
 # DEFINE CAMS (take the last but conv layer)
+gradcam = GradCAM(model, model.Mixed_7c)
+gradcampp = GradCAMpp(model, model.Mixed_7c)
+print("All explainers were initialized successfully")
+
 
 # DEFINE EXPLAINER FUNCTIONS FOR EACH EXPLAINER
 def gradexp_explain(gradexp, input, ranked_outputs = 2, nsamples = 200):
@@ -115,15 +112,14 @@ def gradcampp_explain(gradcampp, input):
 
 # INITIALIZE EXPLAINERS DICTIONARY
 explainer_dictionary = {
-  0: {'name': 'Grad-Explainer', 'explain': gradexp_explain },
-  1: {'name': 'Deep-Explainer', 'explain': deepexp_explain},
-  2: {'name': 'H-Explainer', 'explain': hexp_explain},
-  3: {'name': 'GradCAM', 'explain': gradcam_explain},
-  4: {'name': 'GradCAM++', 'explain': gradcampp_explain},
+  # 0: {'name': 'Grad-Explainer', 'exp': gradexp, 'explain': gradexp_explain },
+  # 1: {'name': 'Deep-Explainer', 'exp': deepexp, 'explain': deepexp_explain},
+  0: {'name': 'H-Explainer', 'exp': hexp, 'explain': hexp_explain},
+  1: {'name': 'GradCAM', 'exp': gradcam, 'explain': gradcam_explain},
+  2: {'name': 'GradCAM++', 'exp': gradcampp, 'explain': gradcampp_explain},
 }
-# explainer = explainer_dictionary[EXPL_ID]
-# explainers_L = len(explainer_dictionary) # number of explainers
-# last_added = np.zeros((explainers_L), dtype=np.uint16)
+explainers_L = len(explainer_dictionary) # number of explainers
+last_added = np.zeros((explainers_L), dtype=np.uint16)
 
 # LOAD SICK IMAGES FOR EXPERIMENT
 EXP_DIR = os.path.join(HOME, "repo/hshap/data/rsna/LOR/datasets/{}".format(EXP_SIZE))
@@ -148,18 +144,11 @@ print("----------")
 print("Loaded {} images".format(exp_imgs_L))
 print("----------")
 
-
-# DEFINE EXPLAINER METHOD
-explainer_name = explainer_dictionary[EXPL_ID]['name']
-explain = explainer_dictionary[EXPL_ID]['explain']
-print("Initialized {} explainer".format(explainer_name))
-
-
 # DEFINE PERTURBATION SIZES
 exp_x = np.linspace(-1, 0, 20)
 perturbation_sizes = np.sort(1.1 - 10**(exp_x))
 perturbations_L = len(perturbation_sizes)
-LOR = torch.zeros((exp_imgs_L, perturbations_L)).to(device)
+LOR = torch.zeros((explainers_L, exp_imgs_L, perturbations_L)).to(device)
 
 # FOR EACH IMAGE
 for eximg_id, image in enumerate(exp_imgs):
@@ -169,63 +158,82 @@ for eximg_id, image in enumerate(exp_imgs):
     input = image.view(-1, 3, 299, 299).detach()
     # id_match = re.search("ex\d*_(\d*).png", image_name)
     # id = int(id_match.group(1))
-        
-    # COMPUTE SALIENCY MAPS
-    exp_t0 = time.time()
-    if explainer_name == 'Grad-Explainer':
-        torch.cuda.empty_cache()
-        saliency_map = explain(explainer, input)
-        
-    elif explainer_name == 'Deep-Explainer':
-        torch.cuda.empty_cache()
-        saliency_map = explain(explainer, input)
-        
-    elif explainer_name == 'H-Explainer':
-        torch.cuda.empty_cache()
-        threshold = 0
-        minSize = MIN_SIZE
-        label = 1
-        saliency_map = explain(explainer, image, threshold=threshold, minW=minSize, minH=minSize, label=label)
 
-    elif explainer_name == 'GradCAM' or explainer_name == 'GradCAM++':
-        torch.cuda.empty_cache()
-        saliency_map = explain(explainer, input)
+    # DEFINE SALIENCY MAPS BATCH
+    exp_batch = np.zeros((explainers_L, 299, 299))
+    # FOR EACH EXPLAINER
+    for explainer_id in explainer_dictionary:
+        # READ EXPLAINER
+        explainer_name = explainer_dictionary[explainer_id]['name']
+        explainer = explainer_dictionary[explainer_id]['exp']
+        explain = explainer_dictionary[explainer_id]['explain']
+
+        
+        # COMPUTE SALIENCY MAPS
+        exp_t0 = time.time()
+        if explainer_name == 'Grad-Explainer':
+            torch.cuda.empty_cache()
+            saliency_map = explain(explainer, input)
+        
+        elif explainer_name == 'Deep-Explainer':
+            torch.cuda.empty_cache()
+            saliency_map = explain(explainer, input)
+        
+        elif explainer_name == 'H-Explainer':
+            torch.cuda.empty_cache()
+            threshold = 0
+            minSize = MIN_SIZE
+            label = 1
+            saliency_map = explain(explainer, image, threshold=threshold, minW=minSize, minH=minSize, label=label)
+
+        elif explainer_name == 'GradCAM' or explainer_name == 'GradCAM++':
+            torch.cuda.empty_cache()
+            saliency_map = explain(explainer, input)
+            
+        exp_batch[explainer_id] = saliency_map
+        print("Explanation time for %s %.3f" % (explainer_name, time.time() - exp_t0))
     
-    print("Explanation time for %s %.3f" % (explainer_name, time.time() - exp_t0))
-
-    # EXTRACT SALIENT POINTS FROM SALIENCY MAP
-    activation_threshold = 0
-    salient_points = np.where(saliency_map > activation_threshold)
-    salient_rows = salient_points[0]
-    salient_columns = salient_points[1]
-    L = len(salient_rows)
-    ids = np.arange(L)
+        activation_threshold = 0
+        salient_points = np.where(saliency_map > activation_threshold)
+        salient_rows = salient_points[0]
+        salient_columns = salient_points[1]
+        L = len(salient_rows)
+        ids = np.arange(L)
         
     # PERTURBATE IMAGES AND EVALUATE LOR
-    # DEFINE PERTURBED INPUT BATCH
-    perturbed_batch = image.view(-1, 3, 299, 299).repeat(perturbations_L, 1, 1, 1)
+    activation_threshold = 0
     for k, perturbation_size in enumerate(perturbation_sizes):
         print("Perturbation={}".format(perturbation_size))
         
-        perturbation_L = int(perturbation_size * L)
-        perturbed_ids = np.random.choice(ids, replace = False, size = perturbation_L)
-        perturbed_rows = salient_rows[perturbed_ids]
-        perturbed_columns = salient_columns[perturbed_ids]
+        # DEFINE PERTURBED INPUT BATCH
+        perturbed_batch = image.view(-1, 3, 299, 299).repeat(explainers_L, 1, 1, 1)
         
-        for j in np.arange(perturbation_L):
-            row = perturbed_rows[j]
-            column = perturbed_columns[j]
-            perturbed_batch[k, :, row, column] = ref[:, row, column]
+        for explainer_id in explainer_dictionary:
+            saliency_map = exp_batch[explainer_id]
+            salient_points = np.where(saliency_map > activation_threshold)
+            salient_rows = salient_points[0]
+            salient_columns = salient_points[1]
+            L = len(salient_rows)
+            ids = np.arange(L)
+
+            perturbation_L = int(perturbation_size * L)
+            perturbed_ids = np.random.choice(ids, replace = False, size = perturbation_L)
+            perturbed_rows = salient_rows[perturbed_ids]
+            perturbed_columns = salient_columns[perturbed_ids]
+        
+            for j in np.arange(perturbation_L):
+                row = perturbed_rows[j]
+                column = perturbed_columns[j]
+                perturbed_batch[explainer_id, :, row, column] = ref[:, row, column]
     
-    prediction = model(perturbed_batch).detach()
-    del perturbed_batch
-    torch.cuda.empty_cache()
-    with torch.no_grad():
-        aux = torch.exp(prediction)
-        logits = torch.div(aux[:, 1], torch.sum(aux, 1))
-        logits = torch.log10(logits)
-                                                         
-    LOR[eximg_id, :] = logits
+        prediction = model(perturbed_batch).detach()
+        del perturbed_batch
+        torch.cuda.empty_cache()
+        with torch.no_grad():
+            aux = torch.exp(prediction)
+            logits = torch.div(aux[:, 1], torch.sum(aux, 1))
+            logits = torch.log10(logits)
+        LOR[:, eximg_id, k] = logits
     print("Analyzed image {} in {}s".format(eximg_id + 1, time.time() - img_t0))
 
-np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR/results/_{}_{}_{}_{}.npy'.format(explainer_name, EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
+np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR/results/no_shap_{}_{}_{}.npy'.format(EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
