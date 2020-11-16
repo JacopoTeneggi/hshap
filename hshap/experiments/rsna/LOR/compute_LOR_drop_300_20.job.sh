@@ -9,6 +9,7 @@
 #SBATCH --time=24:0:0
 
 module load python/3.7
+module load cuda/10.1
 python -m pip install -e /home-2/jtenegg1@jhu.edu/work/repo/hshap/
 
 python /home-2/jtenegg1@jhu.edu/work/repo/hshap/hshap/experiments/rsna/LOR/compute_LOR_drop.py "/home-2/jtenegg1@jhu.edu/work" 300 $SLURM_ARRAY_TASK_ID 20
