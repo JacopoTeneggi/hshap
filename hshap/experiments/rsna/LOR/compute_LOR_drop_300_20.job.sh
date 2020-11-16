@@ -11,4 +11,4 @@
 module load python/3.7
 python -m pip install -e /home-2/jtenegg1@jhu.edu/work/repo/hshap/
 
-python ./compute_LOR_drop.py "/home-2/jtenegg1@jhu.edu/work" 300 $SLURM_ARRAY_TASK_ID 20
+python /home-2/jtenegg1@jhu.edu/work/repo/hshap/hshap/experiments/rsna/LOR/compute_LOR_drop.py "/home-2/jtenegg1@jhu.edu/work" 300 $SLURM_ARRAY_TASK_ID 20
