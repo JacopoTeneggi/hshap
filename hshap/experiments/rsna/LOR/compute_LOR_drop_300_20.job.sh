@@ -1,3 +1,4 @@
+#!/bin/sh
 #SBATCH --job-name=LOR_array_300_20
 #SBATCH --partition=gpuk80
 #SBATCH --gres=gpu:1
