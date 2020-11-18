@@ -236,4 +236,4 @@ for eximg_id, image in enumerate(exp_imgs):
         LOR[:, eximg_id, k] = logits
     print("Analyzed image {} in {}s".format(eximg_id + 1, time.time() - img_t0))
 
-np.save(os.path.join(HOME, 'repo/hshap/data/rsna/LOR/results/no_shap_{}_{}_{}.npy'.format(EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
+np.save(os.path.join(HOME, 'repo/hshap/hshap/experiments/rsna/LOR/results/no_shap_{}_{}_{}.npy'.format(EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
