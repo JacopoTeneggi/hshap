@@ -24,7 +24,6 @@ EXP_SIZE = int(argvs[2])
 REF_SIZE = int(argvs[3])
 MIN_SIZE = int(argvs[4])
 EXPL_ID = int(argvs[5])
-GPU_ID = int(argvs[6])
 
 
 # DEFINE GLOBAL CONSTANTS
@@ -35,7 +34,7 @@ else:
     DATA_DIR = os.path.join(HOME, "repo/hshap/data/rsna/datasets")
 
 # DEFINE DEVICE
-_device = "cuda:{}".format(GPU_ID)
+_device = "cuda:0"
 device = torch.device(_device)
 torch.cuda.empty_cache()
 print("Current device is {}".format(device))
