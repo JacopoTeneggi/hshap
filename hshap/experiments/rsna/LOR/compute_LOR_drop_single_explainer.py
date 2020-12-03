@@ -24,13 +24,18 @@ EXP_SIZE = int(argvs[2])
 REF_SIZE = int(argvs[3])
 MIN_SIZE = int(argvs[4])
 EXPL_ID = int(argvs[5])
+GPU_ID = int(argvs[6])
+
 
 # DEFINE GLOBAL CONSTANTS
 MEAN, STD = np.array([0.485, 0.456, 0.406]), np.array([0.299, 0.224, 0.225])
-DATA_DIR = os.path.join(HOME, "repo/hshap/data/rsna/datasets")
+if HOME == "gaon":
+    DATA_DIR = "/export/gaon1/data/jteneggi/data/rsna/datasets"
+else:
+    DATA_DIR = os.path.join(HOME, "repo/hshap/data/rsna/datasets")
 
 # DEFINE DEVICE
-_device = "cuda:0"
+_device = "cuda:{}".format(GPU_ID)
 device = torch.device(_device)
 torch.cuda.empty_cache()
 print("Current device is {}".format(device))
@@ -40,7 +45,10 @@ model = models.inception_v3(pretrained=True)
 model.aux_logits = False
 num_ftrs = model.fc.in_features
 model.fc = nn.Linear(num_ftrs, 2)
-weight_path = os.path.join(HOME, "repo/hshap/data/rsna/pretrained-models/RSNA_InceptionV3.pth")
+if HOME  == "gaon":
+    weight_path = "/export/gaon1/data/jteneggi/data/rsna/pretrained-models/RSNA_InceptionV3.pth"
+else:
+    weight_path = os.path.join(HOME, "repo/hshap/data/rsna/pretrained-models/RSNA_InceptionV3.pth")
 model.load_state_dict(torch.load(weight_path, map_location=device))
 model = model.to(device)
 model.eval()
@@ -126,7 +134,10 @@ explainer_dictionary = {
 # last_added = np.zeros((explainers_L), dtype=np.uint16)
 
 # LOAD SICK IMAGES FOR EXPERIMENT
-EXP_DIR = os.path.join(HOME, "repo/hshap/data/rsna/LOR/datasets/{}".format(EXP_SIZE))
+if HOME == "gaon":
+    EXP_DIR = "/export/gaon1/data/jteneggi/data/rsna/LOR/datasets/{}".format(EXP_SIZE)
+else:
+    EXP_DIR = os.path.join(HOME, "repo/hshap/data/rsna/LOR/datasets/{}".format(EXP_SIZE))
 exp_img_dataset = hshap.utils.RSNASickDataset(EXP_DIR, preprocess)
 exp_size = EXP_SIZE
 exp_img_loader = torch.utils.data.DataLoader(exp_img_dataset, batch_size=exp_size, num_workers=0)
@@ -228,4 +239,7 @@ for eximg_id, image in enumerate(exp_imgs):
     LOR[eximg_id, :] = logits
     print("Analyzed image {} in {}s".format(eximg_id + 1, time.time() - img_t0))
 
-np.save(os.path.join(HOME, 'repo/hshap/hshap/experiments/rsna/LOR/results/_{}_{}_{}_{}.npy'.format(explainer_name, EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
+if HOME == "gaon":
+    np.save(os.path.join("/cis/home/jteneggi", 'repo/hshap/hshap/experiments/rsna/LOR/results/_{}_{}_{}_{}.npy'.format(explainer_name, EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
+else:
+    np.save(os.path.join(HOME, 'repo/hshap/hshap/experiments/rsna/LOR/results/_{}_{}_{}_{}.npy'.format(explainer_name, EXP_SIZE, REF_SIZE, MIN_SIZE)), LOR.cpu().numpy())
