@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for EXPL_ID in 0
+for EXPL_ID in 1
 do
     for REF_SIZE in 100 200 400 800 1600
     do

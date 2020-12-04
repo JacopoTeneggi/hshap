@@ -72,7 +72,7 @@ dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuf
 train_loader = iter(dataloader)
 X, _ = next(train_loader)
 X = X.detach().to(device)
-ref = torch.mean(X, axis=0)
+# ref = torch.mean(X, axis=0)
 print("Loaded reference batch for shap methods")
 
 # INITIALIZE EXPLAINERS
