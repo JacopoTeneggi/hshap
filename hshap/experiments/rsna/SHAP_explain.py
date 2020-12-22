@@ -77,7 +77,7 @@ background = torch.from_numpy(avg_all_train).detach()
 # background.detach()
 
 # INITIALIZE EXPLAINERS
-gradexp = shap.GradientExplainer(model,)
+gradexp = shap.GradientExplainer(model, X)
 deepexp = shap.DeepExplainer(model, X)
 hexp = HShap.Explainer(model, background)
 # define cams

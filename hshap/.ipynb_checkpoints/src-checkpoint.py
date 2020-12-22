@@ -2,6 +2,7 @@ import numpy as np
 from scipy.special import comb
 from itertools import permutations
 from functools import reduce
+import torch
 
 
 class Node:
@@ -192,7 +193,7 @@ class Explainer:
         self.M = M
         self.masks = self.generateMasks()
         self.features = np.identity(self.M, dtype=np.bool).reshape((self.M, self.M))
-        print("Initialized explainer with map size (%d, %d)" % (self.h, self.h))
+        print("Initialized explainer with map size (%d, %d)" % (self.h, self.w))
 
     def generateMasks(self):
         # initialize masks array with all features on -> no need to compute permutations for |S| = M
@@ -223,7 +224,8 @@ class Explainer:
         self.computed = 0
         self.rejected = 0
         mainNode = Node(self, 0, 4, self.features, self.masks, score=1)
-        nodes = mainNode.nodeScores(input, label, threshold, minW, minH)
+        with torch.no_grad():
+            nodes = mainNode.nodeScores(input, label, threshold, minW, minH)
         flatnodes = list(self.flatten(nodes))
         saliency_map = np.zeros((self.h, self.w))
         for node in flatnodes:
