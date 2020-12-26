@@ -56,7 +56,7 @@ def pil_loader(path):
 
 
 def datasetMeanStd(loader):
-    """ Computes the mean and standard deviation of a dataloader of 3 channel images
+    """Computes the mean and standard deviation of a dataloader of 3 channel images
 
     Parameters
     ----------
@@ -87,7 +87,7 @@ def datasetMeanStd(loader):
 
 
 def denormalize(im, mean, std):
-    """ Restore an image to its range before normalization
+    """Restore an image to its range before normalization
 
     Parameters
     ----------
@@ -109,7 +109,7 @@ def denormalize(im, mean, std):
 
 
 def input2image(input, mean, std):
-    """ Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
+    """Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def input2image(input, mean, std):
 
 
 def display_image(im, true_label, predicted_label=None, figure_size=(8, 5)):
-    """ Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
+    """Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
 
     Parameters
     ----------
@@ -140,9 +140,9 @@ def display_image(im, true_label, predicted_label=None, figure_size=(8, 5)):
         the image to display
     true_label : int in {0,1}
         the ground truth label of im
-    true_label : int in {0,1}, optional 
-        the predicted truth label of im by the neural network 
-    figure_size : tuple of ints, optional 
+    true_label : int in {0,1}, optional
+        the predicted truth label of im by the neural network
+    figure_size : tuple of ints, optional
         size of the matplotlib.pyplot.figure object
     """
 
@@ -155,7 +155,7 @@ def display_image(im, true_label, predicted_label=None, figure_size=(8, 5)):
 
 
 def almost_equal(n1, n2, e):
-    """ Determine if n1 and n2 are almost equal, at a tolerance e.
+    """Determine if n1 and n2 are almost equal, at a tolerance e.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def almost_equal(n1, n2, e):
 
 
 def network_has_converged(loss, e):
-    """ Determine if n1 and n2 are almost equal, at a tolerance e.
+    """Determine if n1 and n2 are almost equal, at a tolerance e.
 
     Parameters
     ----------
@@ -202,7 +202,7 @@ def network_has_converged(loss, e):
 
 
 def training_accuracy(network, loader):
-    """ Determine the accuracy of the predictions of a network.
+    """Determine the accuracy of the predictions of a network.
 
     Parameters
     ----------
@@ -231,7 +231,7 @@ def training_accuracy(network, loader):
 
 
 def validation_stats(network, loader, criterion):
-    """ Judge the training of the network on the validation set.
+    """Judge the training of the network on the validation set.
 
     Parameters
     ----------
@@ -271,7 +271,7 @@ def validation_stats(network, loader, criterion):
 
 
 def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
-    """ Plot the training loss and accuracy of the network on the training and validation set.
+    """Plot the training loss and accuracy of the network on the training and validation set.
 
     Parameters
     ----------
@@ -302,7 +302,7 @@ def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
 
 
 def test(net, loader):
-    """ Confront the network to the testing set.
+    """Confront the network to the testing set.
 
     Parameters
     ----------
@@ -354,7 +354,7 @@ def test(net, loader):
 
 
 def train(net, optimizer, criterion, max_epochs, dataloader, valloader):
-    """ Train a CNN.
+    """Train a CNN.
 
     Parameters
     ----------
@@ -436,12 +436,10 @@ def train(net, optimizer, criterion, max_epochs, dataloader, valloader):
 
 
 class Net(nn.Module):
-    """ CNN architecture for classifying images of 120 pixels in width and 100 in height.
-    """
+    """CNN architecture for classifying images of 120 pixels in width and 100 in height."""
 
     def __init__(self):
-        """ Initialize the CNN.
-        """
+        """Initialize the CNN."""
 
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
@@ -454,7 +452,7 @@ class Net(nn.Module):
         self.drop = nn.Dropout(p=0.5)
 
     def forward(self, x):
-        """ Perform forward propagation across the network.
+        """Perform forward propagation across the network.
 
         Parameters
         ----------
@@ -478,7 +476,7 @@ class Net(nn.Module):
         return x
 
     def num_flat_features(self, x):
-        """ Compute the number entries of one item in a batch.
+        """Compute the number entries of one item in a batch.
 
         Parameters
         ----------
@@ -499,12 +497,10 @@ class Net(nn.Module):
 
 
 class HdNet(nn.Module):
-    """ CNN architecture for classifying images of 1200 pixels in width and 1000 in height.
-        """
+    """CNN architecture for classifying images of 1200 pixels in width and 1000 in height."""
 
     def __init__(self):
-        """ Initialize the CNN.
-        """
+        """Initialize the CNN."""
 
         super(HdNet, self).__init__()
         self.conv0 = nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5, stride=5)
@@ -519,7 +515,7 @@ class HdNet(nn.Module):
         self.drop = nn.Dropout(p=0.5)
 
     def forward(self, x):
-        """ Perform forward propagation across the network.
+        """Perform forward propagation across the network.
 
         Parameters
         ----------
@@ -545,7 +541,7 @@ class HdNet(nn.Module):
         return x
 
     def num_flat_features(self, x):
-        """ Compute the number entries of one item in a batch.
+        """Compute the number entries of one item in a batch.
 
         Parameters
         ----------

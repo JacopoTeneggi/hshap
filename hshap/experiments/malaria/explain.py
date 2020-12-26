@@ -17,7 +17,7 @@ import pandas as pd
 import matplotlib.patches as patches
 import hshap
 
-os.environ["CUDA_VISIBLE_DEVICES"]="5"
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 
 device = torch.device("cuda:0")
 
@@ -29,20 +29,24 @@ model.load_state_dict(torch.load(weight_path, map_location=device))
 model = model.to(device)
 model.eval()
 
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    # transforms.Normalize([0.7206, 0.7204, 0.7651], [0.2305, 0.2384, 0.1706])
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+transform = transforms.Compose(
+    [
+        transforms.ToTensor(),
+        # transforms.Normalize([0.7206, 0.7204, 0.7651], [0.2305, 0.2384, 0.1706])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ]
+)
 
 data_dir = "/export/gaon1/data/jteneggi/data/malaria/trophozoite"
 train_dataset = datasets.ImageFolder(os.path.join(data_dir, "train"), transform)
-dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=300, shuffle=True, num_workers=0)
+dataloader = torch.utils.data.DataLoader(
+    train_dataset, batch_size=300, shuffle=True, num_workers=0
+)
 _iter = iter(dataloader)
 X, _ = next(_iter)
 ref = X.detach().mean(0)
 ref = ref.to(device)
-#ref = torch.zeros((3, 1200, 1600)).to(device)
+# ref = torch.zeros((3, 1200, 1600)).to(device)
 
 hexp = hshap.src.Explainer(model, ref)
 
@@ -72,10 +76,12 @@ for i, image in enumerate(true_positives.item()["1"]):
     print(_input.shape)
     ax.imshow(img)
     t0 = time.time()
-    hexp_saliency, flatnodes = hexp.explain(_input, label=1, threshold=0, minW=20, minH=20)
+    hexp_saliency, flatnodes = hexp.explain(
+        _input, label=1, threshold=0, minW=20, minH=20
+    )
     tf = time.time()
     hexp_runtime = round(tf - t0, 6)
-    print('Execution completed in %.4f s' % (hexp_runtime))
+    print("Execution completed in %.4f s" % (hexp_runtime))
     abs = np.abs(hexp_saliency.flatten())
     max = np.percentile(abs, 99.9)
     ax.imshow(hexp_saliency, cmap="bwr", alpha=0.75, vmax=max, vmin=-max)
@@ -93,7 +99,14 @@ for i, image in enumerate(true_positives.item()["1"]):
                 w = np.abs(lower_right_c - upper_left_c)
                 h = np.abs(lower_right_r - upper_left_r)
                 # Create a Rectangle patch
-                rect = patches.Rectangle((upper_left_c,upper_left_r),w,h,linewidth=1,edgecolor='r',facecolor='none')
+                rect = patches.Rectangle(
+                    (upper_left_c, upper_left_r),
+                    w,
+                    h,
+                    linewidth=1,
+                    edgecolor="r",
+                    facecolor="none",
+                )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
     ax.set_title(image_name)

@@ -27,6 +27,7 @@ for i, row in df_merged.iterrows():
     image_names.append(os.path.basename(row["image"]["pathname"]))
 df_merged["image_name"] = image_names
 
+
 def annotate(ax, image_name):
     query = df_merged.loc[df_merged["image_name"] == image_name]
     for i, row in query.iterrows():
@@ -42,9 +43,17 @@ def annotate(ax, image_name):
                 w = np.abs(lower_right_c - upper_left_c)
                 h = np.abs(lower_right_r - upper_left_r)
                 # Create a Rectangle patch
-                rect = patches.Rectangle((upper_left_c,upper_left_r), w, h, linewidth=2, edgecolor='k', facecolor='none')
+                rect = patches.Rectangle(
+                    (upper_left_c, upper_left_r),
+                    w,
+                    h,
+                    linewidth=2,
+                    edgecolor="k",
+                    facecolor="none",
+                )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
+
 
 exp_mapper = ["hexp", "gradexp", "deepexp", "gradcam", "gradcampp"]
 
@@ -59,16 +68,15 @@ for i, image_path in enumerate(true_positives.item()["1"]):
     ax.set_title("image")
     annotate(ax, image_name)
     for j, exp in enumerate(exp_mapper):
-        ax = axes[j+1]
-        explanation = np.load(os.path.join("true_positive_explanations", "%s/%s.npy" % (exp, image_name)))
+        ax = axes[j + 1]
+        explanation = np.load(
+            os.path.join("true_positive_explanations", "%s/%s.npy" % (exp, image_name))
+        )
         _abs = np.abs(explanation.flatten())
         _max = np.percentile(_abs, 99.9)
         ax.imshow(explanation, cmap="bwr", vmax=_max, vmin=-_max)
         annotate(ax, image_name)
         ax.set_title(exp)
     plt.savefig("true_positive_explanations/figures/%s.eps" % image_name)
-    print("%d/%d saved figure" % (i+1, len(true_positives.item()["1"])))
+    print("%d/%d saved figure" % (i + 1, len(true_positives.item()["1"])))
     plt.close()
-    
-    
-    

@@ -23,7 +23,7 @@ class_dict = {
     "ring": 3,
     "trophozoite": 4,
     "schizont": 5,
-    "difficult": 6
+    "difficult": 6,
 }
 
 L = len(df_training)
@@ -32,7 +32,7 @@ cells_count = torch.zeros((L, q))
 
 # DEFINE DICTIONARY CONTAINING IMAGES BOTH IN THE TRAINING AND TEST SETS THAT
 # HAVE OR DO NOT HAVE AT LEAST ONE TROPHOZOITE
-trophozoites = {0:[], 1:[]}
+trophozoites = {0: [], 1: []}
 for df in [df_training, df_test]:
     for i, image in df_training.iterrows():
         image_name = os.path.basename(image["image"]["pathname"])
@@ -47,8 +47,8 @@ for df in [df_training, df_test]:
             trophozoites[0].append(image_name)
 
 # RANDOMLY CHOOSE 120 IMAGES PER CLASS FROM THE TRAINING DATASET TO BE IN THE TEST SET
-train_trophozoite = {0:[], 1:[]}
-test_trophozoite = {0:[], 1:[]}
+train_trophozoite = {0: [], 1: []}
+test_trophozoite = {0: [], 1: []}
 test_trophozoite_0_ids = choice(len(trophozoites[0]), size=120, replace=False)
 test_trophozoite_1_ids = choice(len(trophozoites[1]), size=120, replace=False)
 
@@ -64,10 +64,16 @@ trophozoites[1] = np.delete(trophozoites[1], test_trophozoite_1_ids)
 for _class in [0, 1]:
     for i, image in enumerate(trophozoites[_class]):
         print("copied {} into train/{}".format(i, _class))
-        copyfile(os.path.join(IMG_DIR, image), os.path.join(TROP_TRAIN_DIR, "{}/{}".format(str(_class), image)))
+        copyfile(
+            os.path.join(IMG_DIR, image),
+            os.path.join(TROP_TRAIN_DIR, "{}/{}".format(str(_class), image)),
+        )
     for i, image in enumerate(test_trophozoite[_class]):
         print("copied {} into test/{}".format(i, _class))
-        copyfile(os.path.join(IMG_DIR, image), os.path.join(TROP_TEST_DIR, "{}/{}".format(str(_class), image)))
+        copyfile(
+            os.path.join(IMG_DIR, image),
+            os.path.join(TROP_TEST_DIR, "{}/{}".format(str(_class), image)),
+        )
 
 # i = len(df_test)
 # q = len(class_dict)
@@ -80,10 +86,10 @@ for _class in [0, 1]:
 #     for cell in cells:
 #         cell_class = cell["category"]
 #         test_cells_count[i, class_dict[cell_class]] += 1
-# 
+#
 #     if test_cells_count[i, class_dict["trophozoite"]] >= 1:
 #         test_trophozoite[1].append(image_name)
-#         copyfile(os.path.join(IMG_DIR, image_name), os.path.join(TROP_TEST_DIR, "{}/{}".format(1, image_name))) 
+#         copyfile(os.path.join(IMG_DIR, image_name), os.path.join(TROP_TEST_DIR, "{}/{}".format(1, image_name)))
 #     else:
 #         test_trophozoite[0].append(image_name)
 #         copyfile(os.path.join(IMG_DIR, image_name), os.path.join(TROP_TEST_DIR, "{}/{}".format(0, image_name)))

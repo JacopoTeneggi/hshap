@@ -24,7 +24,7 @@ class_dict = {
     "ring": 3,
     "trophozoite": 4,
     "schizont": 5,
-    "difficult": 6
+    "difficult": 6,
 }
 
 w = 1600
@@ -35,8 +35,8 @@ for i, image in df_test.iterrows():
     image_path = os.path.join(IMG_DIR, image_name)
     img = Image.open(image_path)
     _w, _h = img.size
-    left = int((_w - w)/2)
-    top = int((_h - h)/2)
+    left = int((_w - w) / 2)
+    top = int((_h - h) / 2)
     right = left + w
     bottom = top + h
     cropped_img = img.crop((left, top, right, bottom))
@@ -48,7 +48,12 @@ for i, image in df_test.iterrows():
         upper_left_c = bbox["minimum"]["c"]
         lower_right_r = bbox["maximum"]["r"]
         lower_right_c = bbox["maximum"]["c"]
-        if upper_left_r < top or upper_left_c < left or lower_right_r > bottom or lower_right_c > right:
+        if (
+            upper_left_r < top
+            or upper_left_c < left
+            or lower_right_r > bottom
+            or lower_right_c > right
+        ):
             ids.append(j)
     cells_cropped = np.delete(cells, ids)
     df_test_cropped.loc[i, "objects"] = list(cells_cropped)

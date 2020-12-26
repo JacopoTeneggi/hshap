@@ -112,7 +112,8 @@ for patient_id, patient in enumerate(patients):
         ax.set_title("%s" % (exp_name))
         fig.colorbar(im, ax=ax)
     plt.savefig(
-        os.path.join(FIGURES_DIR, "%s.eps" % patient), format="eps",
+        os.path.join(FIGURES_DIR, "%s.eps" % patient),
+        format="eps",
     )
     print(
         "%d/%d Saved figure for patient: %s   Prediction: %d"
