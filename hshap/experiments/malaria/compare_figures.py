@@ -55,7 +55,7 @@ def annotate(ax, image_name):
                 ax.add_patch(rect)
 
 
-exp_mapper = ["hexp", "gradexp", "deepexp", "gradcam", "gradcampp"]
+exp_mapper = ["hexp", "gradexp", "deepexp", "partexp", "gradcam", "gradcampp"]
 
 true_positives = np.load("true_positives.npz", allow_pickle=True)
 for i, image_path in enumerate(true_positives.item()["1"]):
@@ -69,7 +69,12 @@ for i, image_path in enumerate(true_positives.item()["1"]):
     annotate(ax, image_name)
     for j, exp in enumerate(exp_mapper):
         ax = axes[j + 1]
-        explanation = np.load(
+        if exp == "hexp":
+            explanation = np.load(
+            os.path.join("true_positive_explanations", "%s/%s/%s.npy" % (exp, "absolute_0", image_name))
+        )
+        else:
+            explanation = np.load(
             os.path.join("true_positive_explanations", "%s/%s.npy" % (exp, image_name))
         )
         _abs = np.abs(explanation.flatten())

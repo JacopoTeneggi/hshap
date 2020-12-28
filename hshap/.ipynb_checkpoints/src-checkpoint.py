@@ -6,51 +6,49 @@ import torch
 
 
 class Node:
-    """
-    Represents the single feature
-    """
-
-    def __init__(self, explainer, depth, M, features, masks, path=None, score=None):
-        self.explainer = explainer
+    def __init__(self, explainer, depth, path=None, score=None):
+        # self.explainer = explainer
+        # self.background = 
         self.depth = depth
-        self.M = M
-        self.features = features
-        self.masks = masks
         self.path = path
         self.score = score
+        # self.root_coordinates = self.__pathMaskCoordinates()
+        # self.root_input = self.__rootPathInput().numpy()
+        self.leaf = self.__leaf()
 
-    def computeShap(self, feature, predictions):
-        feature_index = np.where(feature == 1)
-        subset_indices = np.where(self.masks[:, feature_index[0][0]] == 0)
-        subset = self.masks[subset_indices]
-        added_subset = [np.add(sub, feature) for sub in subset]
-        deltas = np.array(list(zip(added_subset, subset)))
-        diffs = [
-            1
-            / comb(self.M - 1, np.sum(b))
-            * (predictions[self.mask2str(a)] - predictions[self.mask2str(b)])
-            for a, b in deltas
+    def __rootPathInput(self):
+        startRow, endRow, startColumn, endColumn = self.root_coordinates
+        rootInput = self.explainer.background.clone()
+        rootInput[:, startRow:endRow, startColumn:endColumn] = self.explainer.input[
+            :, startRow:endRow, startColumn:endColumn
         ]
-        phi = np.sum(diffs) / self.M
-        return phi
+        return rootInput
 
-    def mask2path(self, mask):
-        if self.path is None:
-            return [mask]
+    def __leaf(self):
+        startRow, endRow, startColumn, endColumn = self.root_coordinates
+        rootw = endColumn - startColumn
+        rooth = endRow - startRow
+        if (rootw < 2 * self.explainer.minW) or (rooth < 2 * self.explainer.minH):
+            return True
         else:
-            return np.concatenate((self.path, mask))
+            return False
 
-    def mask2str(self, mask):
+    def __mask2str(self, mask):
         return reduce(lambda a, b: str(a) + str(b), mask.astype(int))
 
-    def str2mask(self, string):
+    def __str2mask(self, string):
         L = len(string)
         mask = np.empty((L,))
         for i in range(L):
             mask[i] = int(string[i])
         return mask
 
-    def pathMaskCoordinates(self, path, startRow, endRow, startColumn, endColumn):
+    def __pathMaskCoordinates(self, size):
+        path = self.path
+        startRow = 0
+        startColumn = 0
+        endRow = size[0]
+        endColumn = size[1]
         if path is not None:
             for layer in path:
                 w = endColumn - startColumn
@@ -68,125 +66,106 @@ class Node:
                 elif feature_index == 3:
                     startRow += h / 2
                     startColumn += w / 2
-        return int(startRow), int(endRow), int(startColumn), int(endColumn)
+        return (round(startRow), round(endRow), round(startColumn), round(endColumn))
 
-    def maskInput(self, masks, rootInput, startRow, endRow, startColumn, endColumn):
-        d = len(rootInput.shape)
-        q = list(np.ones(d + 1, dtype=np.integer))
-        q[0] = len(masks)
-        maskedInputs = rootInput.repeat(q)
-        w = endColumn - startColumn
-        h = endRow - startRow
-        for i, mask in enumerate(masks):
-            maskIndices = np.where(mask == 0)[0]
-            for index in maskIndices:
-                maskStartRow = startRow
-                maskEndRow = endRow
-                maskStartColumn = startColumn
-                maskEndColumn = endColumn
-                # First quadrant
-                if index == 0:
-                    maskEndRow = startRow + h / 2
-                    maskEndColumn = startColumn + w / 2
-                # Second quadrant
-                elif index == 1:
-                    maskEndRow = startRow + h / 2
-                    maskStartColumn += w / 2
-                # Third quadrant
-                elif index == 2:
-                    maskStartRow += h / 2
-                    maskEndColumn = startColumn + w / 2
-                # Fourth quadrant
-                elif index == 3:
-                    maskStartRow += h / 2
-                    maskStartColumn += w / 2
-                maskStartRow = int(maskStartRow)
-                maskEndRow = int(maskEndRow)
-                maskStartColumn = int(maskStartColumn)
-                maskEndColumn = int(maskEndColumn)
-                maskedInputs[
-                    i, :, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn
-                ] = self.explainer.background[
-                    :, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn
-                ]
-        return maskedInputs
-
-    def rootPathInput(self, path, input, background):
-        startRow, endRow, startColumn, endColumn = self.pathMaskCoordinates(
-            path, 0, self.explainer.h, 0, self.explainer.w
-        )
-        if type(background) == np.ndarray:
-            rootInput = background.copy()
-        else:
-            rootInput = background.clone()
-        rootInput[:, startRow : endRow + 1, startColumn : endColumn + 1] = input[
-            :, startRow : endRow + 1, startColumn : endColumn + 1
+    def computeShap(self, feature, predictions_dictionary):
+        feature_index = np.where(feature == 1)
+        subset_indices = np.where(self.explainer.masks[:, feature_index[0][0]] == 0)
+        subset = self.explainer.masks[subset_indices]
+        added_subset = [np.add(sub, feature) for sub in subset]
+        diffs = [
+            1
+            / comb(self.explainer.M - 1, np.sum(b))
+            * (
+                predictions_dictionary[self.__mask2str(a)]
+                - predictions_dictionary[self.__mask2str(b)]
+            )
+            for a, b in zip(added_subset, subset)
         ]
-        return rootInput, startRow, endRow, startColumn, endColumn
+        phi = np.sum(diffs) / self.explainer.M
+        return phi
 
-    def nodeScores(self, input, label, threshold, minW, minH):
-        #
-        rootInput, startRow, endRow, startColumn, endColumn = self.rootPathInput(
-            self.path, input, self.explainer.background
-        )
-        rootw = endColumn - startColumn
-        rooth = endRow - startRow
-        # Stop when it reaches the deepest layer and return current node
-        if (rootw < 2 * minW) or (rooth < 2 * minH):
-            return self
-        # If not, go down another level and compute shap coefficients for features
-        maskedInputs = self.maskInput(
-            self.masks, rootInput, startRow, endRow, startColumn, endColumn
-        )
-        outputs = self.explainer.model(maskedInputs)
-        predictions = {
-            self.mask2str(mask): outputs[i, label] for i, mask in enumerate(self.masks)
-        }
-        phis = {
-            self.mask2str(feature): self.computeShap(feature, predictions)
-            for feature in self.features
-        }
-
-        # Update number of computed features
-        self.explainer.computed += self.M
-
-        # Convert SHAP dictionary to lists -> TODO: evaluate wether SHAP dictionary is necessary
-        values = np.fromiter(phis.values(), dtype=float)
-        keys = list(phis.keys())
-
-        # Identify relevant features
-        if threshold is not None:
-            relevantIndices = np.where(values > threshold)[0]
+    def masked_inputs(self, masks, _input, background):
+        if self.leaf is True:
+            return []
         else:
-            relevantIndices = np.arange(self.M)
+            start_row, end_row, start_column, end_column = self.__pathMaskCoordinates(_input[0].shape)
+            root_input = background.clone()
+            root_input[:, start_row:end_row, start_column:end_column] = _input[
+                :, start_row:end_row, start_column:end_column
+            ]
+            d = len(root_input.shape)
+            q = list(np.ones(d + 1, dtype=np.integer))
+            q[0] = len(masks)
+            masked_inputs = self.root_input.repeat(q)
+            w = endColumn - startColumn
+            h = endRow - startRow
+            for i, mask in enumerate(masks):
+                maskIndices = np.where(mask == 0)[0]
+                for index in maskIndices:
+                    maskStartRow = startRow
+                    maskEndRow = endRow
+                    maskStartColumn = startColumn
+                    maskEndColumn = endColumn
+                    # First quadrant
+                    if index == 0:
+                        maskEndRow = startRow + h / 2
+                        maskEndColumn = startColumn + w / 2
+                    # Second quadrant
+                    elif index == 1:
+                        maskEndRow = startRow + h / 2
+                        maskStartColumn += w / 2
+                    # Third quadrant
+                    elif index == 2:
+                        maskStartRow += h / 2
+                        maskEndColumn = startColumn + w / 2
+                    # Fourth quadrant
+                    elif index == 3:
+                        maskStartRow += h / 2
+                        maskStartColumn += w / 2
+                    maskStartRow = round(maskStartRow)
+                    maskEndRow = round(maskEndRow)
+                    maskStartColumn = round(maskStartColumn)
+                    maskEndColumn = round(maskEndColumn)
+                    masked_inputs[
+                        i, :, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn
+                    ] = background[
+                        :, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn
+                    ]
+            return masked_inputs
+    
+    def children_scores(self, outputs):
+        if self.leaf is True:
+            return []
+        else:
+            outputs_dictionary = {
+                self.__mask2str(mask): outputs[i]
+                for i, mask in enumerate(self.explainer.masks)
+            }
+            return [self.computeShap(feature, outputs_dictionary) for feature in self.explainer.features]
 
-        # Update number of rejected features
-        self.explainer.rejected += self.M - len(relevantIndices)
-
-        # Initialize children and recursively compute SHAP values
-        children = []
-        for relevantIndex in relevantIndices:
-            childPath = np.array([self.str2mask(keys[relevantIndex])])
-            if self.path is not None:
-                childPath = np.concatenate((self.path, childPath))
-            child = Node(
+    def child(self, feature, score):
+        if self.leaf is True:
+            return None
+        else:
+            return Node(
                 self.explainer,
                 self.depth + 1,
-                self.M,
-                self.features,
-                self.masks,
-                path=childPath,
-                score=values[relevantIndex],
+                path=np.concatenate(
+                    (self.path, np.array([self.__str2mask(feature)]))
+                )
+                if self.path is not None
+                else np.array([self.__str2mask(feature)]),
+                score=score
             )
-            children.append(child.nodeScores(input, label, threshold, minW, minH))
-        return children
-
 
 class Explainer:
     def __init__(self, model, background, M=4):
+        self.input = None
+        self.label = None
+        self.minW = None
+        self.minH = None
         self.model = model
-        self.computed = None
-        self.rejected = None
         self.background = background
         self.h = self.background.shape[1]
         self.w = self.background.shape[2]
@@ -196,7 +175,6 @@ class Explainer:
         print("Initialized explainer with map size (%d, %d)" % (self.h, self.w))
 
     def generateMasks(self):
-        # initialize masks array with all features on -> no need to compute permutations for |S| = M
         masks = np.ones((1, self.M), dtype=np.bool)
         for i in range(self.M):
             s = np.zeros(self.M, dtype=np.bool)
@@ -214,20 +192,79 @@ class Explainer:
                 yield el
 
     def addNodeMask(self, node, map):
-        startRow, endRow, startColumn, endColumn = node.pathMaskCoordinates(
-            node.path, 0, self.h, 0, self.w
-        )
-        nodeArea = (endRow + 1 - startRow) * (endColumn + 1 - startColumn)
-        map[startRow : endRow + 1, startColumn : endColumn + 1] = node.score / nodeArea
+        startRow, endRow, startColumn, endColumn = node.root_coordinates
+        nodeArea = (endRow - startRow) * (endColumn - startColumn)
+        map[startRow:endRow, startColumn:endColumn] = node.score
+        # map[startRow : endRow, startColumn : endColumn] = node.score / nodeArea
 
-    def explain(self, input, label=None, threshold=0, minW=2, minH=2):
-        self.computed = 0
-        self.rejected = 0
-        mainNode = Node(self, 0, 4, self.features, self.masks, score=1)
-        with torch.no_grad():
-            nodes = mainNode.nodeScores(input, label, threshold, minW, minH)
-        flatnodes = list(self.flatten(nodes))
+    def explain(
+        self,
+        input,
+        label,
+        minW=2,
+        minH=2,
+        threshold_mode="absolute",
+        threshold=0,
+        percentile=50,
+    ):
+        self.model.eval()
+        self.input = input
+        self.label = label
+        self.minW = minW
+        self.minH = minH
+        batch_size = 3
+        main_node = Node(self, 0)
+        level = [main_node]
+        leafs = []
+        L = len(level)
+        while L > 0:
+            layer_scores = np.zeros((L, self.M))
+            n_batch = (
+                int(L / batch_size) if L % batch_size == 0 else int(L / batch_size) + 1
+            )
+            for batch_id in np.arange(0, n_batch):
+                first_id = batch_size * batch_id
+                if batch_id < n_batch:
+                    batch = level[first_id : first_id + batch_size]
+                else:
+                    batch = level[first_id:]
+                l = len(batch)
+                with torch.no_grad():
+                    batch_input = torch.cat([node.masked_inputs() for node in batch], 0)
+                    batch_outputs = self.model(batch_input).cpu()
+                    batch_outputs = batch_outputs.view(
+                        (l, 2 ** self.M, batch_outputs.size(1))
+                    )
+                    for i, node in enumerate(batch):
+                        node_outputs = batch_outputs[i]
+                        node_outputs = node_outputs[:, label]
+                        node_scores = node.children_scores(node_outputs)
+                        layer_scores[batch_id * batch_size + i] = node_scores
+                    torch.cuda.empty_cache()
+            flat_layer_scores = layer_scores.flatten()
+            if threshold_mode == "absolute":
+                masked_layer_scores = np.ma.masked_greater(flat_layer_scores, threshold).mask.reshape(layer_scores.shape)
+            if threshold_mode == "relative":
+                threshold = np.percentile(flat_layer_scores, percentile)
+                if threshold <= 0:
+                    masked_layer_scores = np.ma.masked_greater(flat_layer_scores, threshold).mask.reshape(layer_scores.shape)
+                else:
+                    masked_layer_scores = np.ma.masked_greater_equal(flat_layer_scores, threshold).mask.reshape(layer_scores.shape)
+            next_level = []
+            for i, node in enumerate(level):
+                for j, relevant in enumerate(masked_layer_scores[i]):
+                    if relevant == True:
+                        child_score = layer_scores[i, j]
+                        feature = self.features[j]
+                        child = node.child(feature, child_score)
+                        if child.leaf is True:
+                            leafs.append(child)
+                        else:
+                            next_level.append(child)
+            level = next_level
+            L = len(level)
+            # print(L)
         saliency_map = np.zeros((self.h, self.w))
-        for node in flatnodes:
+        for node in leafs:
             self.addNodeMask(node, saliency_map)
-        return saliency_map, flatnodes
+        return saliency_map, leafs

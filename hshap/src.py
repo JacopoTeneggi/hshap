@@ -7,12 +7,13 @@ import torch
 
 class Node:
     def __init__(self, explainer, depth, path=None, score=None):
-        self.explainer = explainer
+        # self.explainer = explainer
+        # self.background = 
         self.depth = depth
         self.path = path
         self.score = score
-        self.root_coordinates = self.__pathMaskCoordinates()
-        self.root_input = self.__rootPathInput()
+        # self.root_coordinates = self.__pathMaskCoordinates()
+        # self.root_input = self.__rootPathInput().numpy()
         self.leaf = self.__leaf()
 
     def __rootPathInput(self):
@@ -42,12 +43,12 @@ class Node:
             mask[i] = int(string[i])
         return mask
 
-    def __pathMaskCoordinates(self):
+    def __pathMaskCoordinates(self, size):
         path = self.path
         startRow = 0
         startColumn = 0
-        endRow = self.explainer.h
-        endColumn = self.explainer.w
+        endRow = size[0]
+        endColumn = size[1]
         if path is not None:
             for layer in path:
                 w = endColumn - startColumn
@@ -84,18 +85,22 @@ class Node:
         phi = np.sum(diffs) / self.explainer.M
         return phi
 
-    def masked_inputs(self):
+    def masked_inputs(self, masks, _input, background):
         if self.leaf is True:
             return []
         else:
-            startRow, endRow, startColumn, endColumn = self.root_coordinates
-            d = len(self.root_input.shape)
+            start_row, end_row, start_column, end_column = self.__pathMaskCoordinates(_input[0].shape)
+            root_input = background.clone()
+            root_input[:, start_row:end_row, start_column:end_column] = _input[
+                :, start_row:end_row, start_column:end_column
+            ]
+            d = len(root_input.shape)
             q = list(np.ones(d + 1, dtype=np.integer))
-            q[0] = len(self.explainer.masks)
+            q[0] = len(masks)
             masked_inputs = self.root_input.repeat(q)
             w = endColumn - startColumn
             h = endRow - startRow
-            for i, mask in enumerate(self.explainer.masks):
+            for i, mask in enumerate(masks):
                 maskIndices = np.where(mask == 0)[0]
                 for index in maskIndices:
                     maskStartRow = startRow
@@ -124,34 +129,35 @@ class Node:
                     maskEndColumn = round(maskEndColumn)
                     masked_inputs[
                         i, :, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn
-                    ] = self.explainer.background[
+                    ] = background[
                         :, maskStartRow:maskEndRow, maskStartColumn:maskEndColumn
                     ]
             return masked_inputs
-
-    def children(self, predictions):
+    
+    def children_scores(self, outputs):
         if self.leaf is True:
             return []
         else:
-            predictions_dictionary = {
-                self.__mask2str(mask): predictions[i]
+            outputs_dictionary = {
+                self.__mask2str(mask): outputs[i]
                 for i, mask in enumerate(self.explainer.masks)
             }
-            children = [
-                Node(
-                    self.explainer,
-                    self.depth + 1,
-                    path=np.concatenate(
-                        (self.path, np.array([self.__str2mask(feature)]))
-                    )
-                    if self.path is not None
-                    else np.array([self.__str2mask(feature)]),
-                    score=self.computeShap(feature, predictions_dictionary),
-                )
-                for feature in self.explainer.features
-            ]
-            return children
+            return [self.computeShap(feature, outputs_dictionary) for feature in self.explainer.features]
 
+    def child(self, feature, score):
+        if self.leaf is True:
+            return None
+        else:
+            return Node(
+                self.explainer,
+                self.depth + 1,
+                path=np.concatenate(
+                    (self.path, np.array([self.__str2mask(feature)]))
+                )
+                if self.path is not None
+                else np.array([self.__str2mask(feature)]),
+                score=score
+            )
 
 class Explainer:
     def __init__(self, model, background, M=4):
@@ -201,22 +207,22 @@ class Explainer:
         threshold=0,
         percentile=50,
     ):
+        self.model.eval()
         self.input = input
         self.label = label
         self.minW = minW
         self.minH = minH
-        batch_size = 4
+        batch_size = 3
         main_node = Node(self, 0)
         level = [main_node]
         leafs = []
         L = len(level)
         while L > 0:
-            next_level = []
-            scores = []
+            layer_scores = np.zeros((L, self.M))
             n_batch = (
                 int(L / batch_size) if L % batch_size == 0 else int(L / batch_size) + 1
             )
-            for batch_id in np.arange(n_batch):
+            for batch_id in np.arange(0, n_batch):
                 first_id = batch_size * batch_id
                 if batch_id < n_batch:
                     batch = level[first_id : first_id + batch_size]
@@ -224,34 +230,40 @@ class Explainer:
                     batch = level[first_id:]
                 l = len(batch)
                 with torch.no_grad():
-                    batch_input = torch.cat([node.masked_inputs() for node in level], 0)
-                    batch_outputs = self.model(batch_input)
+                    batch_input = torch.cat([node.masked_inputs() for node in batch], 0)
+                    batch_outputs = self.model(batch_input).cpu()
                     batch_outputs = batch_outputs.view(
                         (l, 2 ** self.M, batch_outputs.size(1))
                     )
                     for i, node in enumerate(batch):
                         node_outputs = batch_outputs[i]
-                        _, node_predictions = torch.max(node_outputs, 1)
-                        node_children = node.children(node_predictions)
-                        for child in node_children:
-                            next_level.append(child)
-                            scores.append(child.score)
-            scores = np.array(scores)
-            next_level = np.array(next_level)
+                        node_outputs = node_outputs[:, label]
+                        node_scores = node.children_scores(node_outputs)
+                        layer_scores[batch_id * batch_size + i] = node_scores
+                    torch.cuda.empty_cache()
+            flat_layer_scores = layer_scores.flatten()
             if threshold_mode == "absolute":
-                relevant_children = np.where(scores > threshold)[0]
-                next_level = next_level[relevant_children]
+                masked_layer_scores = np.ma.masked_greater(flat_layer_scores, threshold).mask.reshape(layer_scores.shape)
             if threshold_mode == "relative":
-                threshold = np.percentile(scores, percentile)
-                relevant_children = np.where(scores >= threshold)[0]
-                next_level = next_level[relevant_children]
-            leaf_ids = []
-            for i, node in enumerate(next_level):
-                if node.leaf is True:
-                    leafs.append(node)
-                    leaf_ids.append(i)
-            level = np.delete(next_level, leaf_ids)
+                threshold = np.percentile(flat_layer_scores, percentile)
+                if threshold <= 0:
+                    masked_layer_scores = np.ma.masked_greater(flat_layer_scores, threshold).mask.reshape(layer_scores.shape)
+                else:
+                    masked_layer_scores = np.ma.masked_greater_equal(flat_layer_scores, threshold).mask.reshape(layer_scores.shape)
+            next_level = []
+            for i, node in enumerate(level):
+                for j, relevant in enumerate(masked_layer_scores[i]):
+                    if relevant == True:
+                        child_score = layer_scores[i, j]
+                        feature = self.features[j]
+                        child = node.child(feature, child_score)
+                        if child.leaf is True:
+                            leafs.append(child)
+                        else:
+                            next_level.append(child)
+            level = next_level
             L = len(level)
+            # print(L)
         saliency_map = np.zeros((self.h, self.w))
         for node in leafs:
             self.addNodeMask(node, saliency_map)
