@@ -55,28 +55,31 @@ def annotate(ax, image_name):
                 ax.add_patch(rect)
 
 
-exp_mapper = ["absolute_0", "relative_51", "relative_70", "relative_80", "relative_90"]
+thresholds = ["absolute_0", "relative_50", "relative_60", "relative_70", "relative_80", "relative_90"]
 
 true_positives = np.load("true_positives.npz", allow_pickle=True)
 for i, image_path in enumerate(true_positives.item()["1"]):
     fig = plt.figure(figsize=(26, 4))
-    axes = fig.subplots(1, len(exp_mapper) + 1)
+    axes = fig.subplots(1, len(thresholds) + 1)
     image_name = os.path.basename(image_path)
+    print(image_name)
     image = Image.open(image_path)
     ax = axes[0]
     ax.imshow(image)
     ax.set_title("image")
     annotate(ax, image_name)
-    for j, exp in enumerate(exp_mapper):
+    for j, threshold in enumerate(thresholds):
         ax = axes[j + 1]
         explanation = np.load(
-            os.path.join("true_positive_explanations", "hexp/%s/%s.npy" % (exp, image_name))
+            os.path.join("true_positive_explanations", "hexp/%s/%s.npy" % (threshold, image_name))
         )
         _abs = np.abs(explanation.flatten())
-        _max = np.percentile(_abs, 99.9)
+        _max = max(_abs)
+        # _max = np.percentile(_abs, 99.9)
+        print(_max)
         ax.imshow(explanation, cmap="bwr", vmax=_max, vmin=-_max)
         annotate(ax, image_name)
-        ax.set_title(exp)
+        ax.set_title(threshold)
     plt.savefig("true_positive_explanations/figures/%s.eps" % image_name)
     print("%d/%d saved figure" % (i + 1, len(true_positives.item()["1"])))
     plt.close()

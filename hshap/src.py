@@ -37,7 +37,6 @@ class Node:
         endRow = size[0]
         endColumn = size[1]
         if path is not None:
-            print(path)
             for layer in path:
                 w = endColumn - startColumn
                 h = endRow - startRow
@@ -179,6 +178,7 @@ class Explainer:
 
     def addNodeMask(self, node, map):
         startRow, endRow, startColumn, endColumn = node.pathMaskCoordinates(self.size)
+        print(startRow, endRow, startColumn, endColumn, node.score)
         nodeArea = (endRow - startRow) * (endColumn - startColumn)
         map[startRow:endRow, startColumn:endColumn] = node.score
         # map[startRow : endRow, startColumn : endColumn] = node.score / nodeArea
@@ -197,7 +197,7 @@ class Explainer:
         self.label = label
         self.minW = minW
         self.minH = minH
-        batch_size = 3
+        batch_size = 2
         main_node = Node()
         level = [main_node]
         leafs = []
@@ -228,6 +228,7 @@ class Explainer:
                     )
                     for i, node in enumerate(batch):
                         node_outputs = batch_outputs[i]
+                        # _, node_outputs = torch.max(node_outputs, 1)
                         node_outputs = node_outputs[:, label]
                         node_scores = node.children_scores(
                             self.masks, self.features, node_outputs
@@ -235,6 +236,7 @@ class Explainer:
                         layer_scores[batch_id * batch_size + i] = node_scores
                     torch.cuda.empty_cache()
             flat_layer_scores = layer_scores.flatten()
+            # print(flat_layer_scores)
             if threshold_mode == "absolute":
                 masked_layer_scores = np.ma.masked_greater(
                     flat_layer_scores, threshold
@@ -249,13 +251,13 @@ class Explainer:
                     masked_layer_scores = np.ma.masked_greater_equal(
                         flat_layer_scores, threshold
                     ).mask.reshape(layer_scores.shape)
+            # print(percentile, threshold, max(flat_layer_scores))
             next_level = []
             for i, node in enumerate(level):
                 for j, relevant in enumerate(masked_layer_scores[i]):
                     if relevant == True:
                         child_score = layer_scores[i, j]
                         feature = self.features[j]
-                        print(feature)
                         child = node.child(feature, child_score)
                         if child.leaf(self.size, self.minW, self.minH) is True:
                             leafs.append(child)
@@ -263,7 +265,7 @@ class Explainer:
                             next_level.append(child)
             level = next_level
             L = len(level)
-            # print(L)
+            # print(L, len(leafs))
         saliency_map = np.zeros(self.size)
         for node in leafs:
             self.addNodeMask(node, saliency_map)

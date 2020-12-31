@@ -20,7 +20,7 @@ import shap
 from gradcam.utils import visualize_cam
 from gradcam import GradCAM, GradCAMpp
 
-os.environ["CUDA_VISIBLE_DEVICES"]="6"
+os.environ["CUDA_VISIBLE_DEVICES"]="7"
 
 device = torch.device("cuda:0")
 torch.backends.cudnn.deterministic = True
@@ -53,9 +53,7 @@ def init_hexp():
     hexp = hshap.src.Explainer(model, ref)
     return hexp
 
-threshold_mode = "absolute"
 threshold = 0
-percentile = 51
 def hexp_explain(hexp, image):
     explanation, _ = hexp.explain(image, label=1, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold, minW=20, minH=20)
     return explanation
@@ -179,7 +177,7 @@ for i, row in df_merged.iterrows():
 df_merged["image_name"] = image_names
 
 true_positives = np.load("true_positives.npz", allow_pickle=True)
-for exp in [exp_mapper[0], exp_mapper[3]]:
+for exp in [exp_mapper[0]]:
     exp_name = exp["name"]
     explainer = exp["init"]()
     explain = exp["explain"]
@@ -187,14 +185,22 @@ for exp in [exp_mapper[0], exp_mapper[3]]:
     for i, image_path in enumerate(true_positives.item()["1"]):
         image_name = os.path.basename(image_path)
         image = transform(Image.open(image_path))
-        t0 = time.time()
-        explanation = explain(explainer, image)
-        torch.cuda.empty_cache()
-        # hexp_saliency, flatnodes = hexp.explain(_input, label=1, threshold=0, minW=20, minH=20)
-        tf = time.time()
-        runtime = round(tf - t0, 6)
-        print('%s: %d/%d runtime=%.4fs' % (exp_name, i+1, len(true_positives.item()["1"]), runtime))
         if exp_name == "hexp":
-            np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold if threshold_mode == "absolute" else percentile, image_name), explanation)       
+            for percentile in [50, 60, 70, 80, 90]:
+                threshold_mode = "relative"
+                t0 = time.time()
+                explanation = explain(explainer, image)
+                torch.cuda.empty_cache()
+                tf = time.time()
+                runtime = round(tf - t0, 6)
+                print('%s(%d): %d/%d runtime=%.4fs' % (exp_name, percentile, i+1, len(true_positives.item()["1"]), runtime))
+                np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold if threshold_mode == "absolute" else percentile, image_name), explanation)
         else:
+            t0 = time.time()
+            explanation = explain(explainer, image)
+            torch.cuda.empty_cache()
+            tf = time.time()
+            runtime = round(tf - t0, 6)
+            print('%s: %d/%d runtime=%.4fs' % (exp_name, i+1, len(true_positives.item()["1"]), runtime))
             np.save("true_positive_explanations/%s/%s" % (exp_name, image_name), explanation)
+            
