@@ -239,8 +239,9 @@ for eximg_id, image in enumerate(exp_imgs):
     salient_points = np.where(saliency_map > activation_threshold)
     salient_rows = salient_points[0]
     salient_columns = salient_points[1]
-    L = len(salient_rows)
-    ids = np.arange(L)
+    scores = saliency_map[salient_points]
+    L = len(scores)
+    ranks = np.argsort(scores)
 
     # PERTURBATE IMAGES AND EVALUATE LOR
     # DEFINE PERTURBED INPUT BATCH
@@ -248,23 +249,19 @@ for eximg_id, image in enumerate(exp_imgs):
     for k, perturbation_size in enumerate(perturbation_sizes):
         print("Perturbation={}".format(perturbation_size))
 
-        perturbation_L = int(perturbation_size * L)
-        perturbed_ids = np.random.choice(ids, replace=False, size=perturbation_L)
+        perturbation_L = round(perturbation_size * L)
+        perturbed_ids = ranks[-perturbation_L:]
         perturbed_rows = salient_rows[perturbed_ids]
         perturbed_columns = salient_columns[perturbed_ids]
+        perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
+            :, perturbed_rows, perturbed_columns
+        ]
 
-        for j in np.arange(perturbation_L):
-            row = perturbed_rows[j]
-            column = perturbed_columns[j]
-            perturbed_batch[k, :, row, column] = ref[:, row, column]
-
-    prediction = model(perturbed_batch).detach()
-    del perturbed_batch
-    torch.cuda.empty_cache()
     with torch.no_grad():
-        aux = torch.exp(prediction)
-        logits = torch.div(aux[:, 1], torch.sum(aux, 1))
-        logits = torch.log10(logits)
+        outputs = model(perturbed_batch).detach()
+        del perturbed_batch
+        torch.cuda.empty_cache()
+        logits = torch.log10(torch.nn.Softmax(dim=1)(outputs))
 
     LOR[eximg_id, :] = logits
     print("Analyzed image {} in {}s".format(eximg_id + 1, time.time() - img_t0))

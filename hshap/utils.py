@@ -55,6 +55,43 @@ def pil_loader(path):
         return img.convert("RGB")
 
 
+def compute_perturbed_logits(model, image, explanation, perturbation_sizes):
+    # DEFINE PERTURBATION SIZES
+    # exp_x = np.linspace(-1, 0, 20)
+    # perturbation_sizes = np.sort(1.1 - 10 ** (exp_x))
+    # perturbations_L = len(perturbation_sizes)
+
+    # IDENTIFY SALIENT POINTS AND RANK THEM
+    activation_threshold = 0
+    salient_points = np.where(explanation > activation_threshold)
+    salient_rows = salient_points[0]
+    salient_columns = salient_points[1]
+    scores = explanation[salient_points]
+    L = len(scores)
+    ranks = np.argsort(scores)
+
+    # PERTURBATE IMAGES AND EVALUATE LOGITS
+    perturbed_batch = image.unsqueeze(0).repeat(perturbations_L, 1, 1, 1)
+    for k, perturbation_size in enumerate(perturbation_sizes):
+        print("Perturbation={}".format(perturbation_size))
+
+        perturbation_L = round(perturbation_size * L)
+        perturbed_ids = ranks[-perturbation_L:]
+        perturbed_rows = salient_rows[perturbed_ids]
+        perturbed_columns = salient_columns[perturbed_ids]
+        perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
+            :, perturbed_rows, perturbed_columns
+        ]
+
+    with torch.no_grad():
+        outputs = model(perturbed_batch)
+        del perturbed_batch
+        torch.cuda.empty_cache()
+        logits = torch.log10(torch.nn.Softmax(dim=1)(outputs))
+
+    return logits
+
+
 def datasetMeanStd(loader):
     """Computes the mean and standard deviation of a dataloader of 3 channel images
 
