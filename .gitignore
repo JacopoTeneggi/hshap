@@ -1,5 +1,5 @@
 .vscode
 .ipynb_checkpoints
 data
-hshap/experiments/malaria/true_positive_explanations/figures
-
+hshap/experiments/**/true_positive_explanations/
+hshap/experiments/**/true_positive_explanations/

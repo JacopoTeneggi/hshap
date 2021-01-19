@@ -4,6 +4,7 @@ import torch.utils.data as data
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import numpy.ma as ma
 
 # PIL IMPORT
 from PIL import Image
@@ -55,11 +56,9 @@ def pil_loader(path):
         return img.convert("RGB")
 
 
-def compute_perturbed_logits(model, image, explanation, perturbation_sizes):
-    # DEFINE PERTURBATION SIZES
-    # exp_x = np.linspace(-1, 0, 20)
-    # perturbation_sizes = np.sort(1.1 - 10 ** (exp_x))
-    # perturbations_L = len(perturbation_sizes)
+def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization):
+    perturbations_L = len(perturbation_sizes)
+    tmp = torch.zeros(perturbations_L)
 
     # IDENTIFY SALIENT POINTS AND RANK THEM
     activation_threshold = 0
@@ -67,29 +66,43 @@ def compute_perturbed_logits(model, image, explanation, perturbation_sizes):
     salient_rows = salient_points[0]
     salient_columns = salient_points[1]
     scores = explanation[salient_points]
-    L = len(scores)
     ranks = np.argsort(scores)
-
+    L = len(scores)
+    # print(L)
+    
+    masked_perturbations = ma.masked_greater(perturbation_sizes, L)
+    valid_perturbations = masked_perturbations.compressed()
+    # print(valid_perturbations)
+    m = len(valid_perturbations)
+    # print(m)
     # PERTURBATE IMAGES AND EVALUATE LOGITS
-    perturbed_batch = image.unsqueeze(0).repeat(perturbations_L, 1, 1, 1)
-    for k, perturbation_size in enumerate(perturbation_sizes):
-        print("Perturbation={}".format(perturbation_size))
-
-        perturbation_L = round(perturbation_size * L)
-        perturbed_ids = ranks[-perturbation_L:]
-        perturbed_rows = salient_rows[perturbed_ids]
-        perturbed_columns = salient_columns[perturbed_ids]
-        perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
-            :, perturbed_rows, perturbed_columns
-        ]
+    _input = image.unsqueeze(0)    
+    perturbed_batch = _input.repeat(m, 1, 1, 1)
+    for k, perturbation_size in enumerate(valid_perturbations):
+        # perturbation_L = round(perturbation_size * L)
+        # print(perturbation_size)
+        if perturbation_size > 0:
+            perturbed_ids = ranks[-perturbation_size:]
+            perturbed_rows = salient_rows[perturbed_ids]
+            perturbed_columns = salient_columns[perturbed_ids]
+            perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
+                :, perturbed_rows, perturbed_columns
+            ]
 
     with torch.no_grad():
         outputs = model(perturbed_batch)
-        del perturbed_batch
+        logits = torch.nn.Softmax(dim=1)(outputs).cpu()[:, 1]
+        # logits = torch.log10(logits)
         torch.cuda.empty_cache()
-        logits = torch.log10(torch.nn.Softmax(dim=1)(outputs))
+        # print(logits)
+    
+    for i in np.arange(m):
+        tmp[i] = logits[i]
+        if normalization == "original":
+            tmp[i] /= logits[0]
+            # print(tmp[i])
 
-    return logits
+    return tmp
 
 
 def datasetMeanStd(loader):
@@ -506,7 +519,7 @@ class Net(nn.Module):
         x = self.pool1(x)
         x = F.relu(self.conv2(x))
         x = self.pool2(x)
-        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
+        x = x.reshape(-1, self.num_flat_features(x))  # 16*9*11
         x = self.drop(F.relu(self.fc1(x)))
         x = self.drop(F.relu(self.fc2(x)))
         x = self.fc3(x)

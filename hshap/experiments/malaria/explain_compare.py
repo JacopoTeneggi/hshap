@@ -20,7 +20,7 @@ import shap
 from gradcam.utils import visualize_cam
 from gradcam import GradCAM, GradCAMpp
 
-os.environ["CUDA_VISIBLE_DEVICES"]="7"
+os.environ["CUDA_VISIBLE_DEVICES"]="9"
 
 device = torch.device("cuda:0")
 torch.backends.cudnn.deterministic = True
@@ -44,7 +44,7 @@ transform = transforms.Compose([
 def init_hexp():
     data_dir = "/export/gaon1/data/jteneggi/data/malaria/trophozoite"
     train_dataset = datasets.ImageFolder(os.path.join(data_dir, "train"), transform)
-    dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=50, shuffle=True, num_workers=0)
+    dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=0)
     _iter = iter(dataloader)
     X, _ = next(_iter)
     ref = X.detach().mean(0)
@@ -53,9 +53,10 @@ def init_hexp():
     hexp = hshap.src.Explainer(model, ref)
     return hexp
 
-threshold = 0
+n_nodes = []
 def hexp_explain(hexp, image):
-    explanation, _ = hexp.explain(image, label=1, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold, minW=20, minH=20)
+    explanation, (n, _) = hexp.explain(image, label=1, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold, minW=30, minH=30)
+    n_nodes.append((threshold_mode, threshold if threshold_mode == "absolute" else percentile, n))
     return explanation
 
 def init_gradexp():
@@ -176,7 +177,7 @@ for i, row in df_merged.iterrows():
     image_names.append(os.path.basename(row["image"]["pathname"]))
 df_merged["image_name"] = image_names
 
-true_positives = np.load("true_positives.npz", allow_pickle=True)
+true_positives = np.load("true_positives.npy", allow_pickle=True)
 for exp in [exp_mapper[0]]:
     exp_name = exp["name"]
     explainer = exp["init"]()
@@ -186,15 +187,24 @@ for exp in [exp_mapper[0]]:
         image_name = os.path.basename(image_path)
         image = transform(Image.open(image_path))
         if exp_name == "hexp":
-            for percentile in [50, 60, 70, 80, 90]:
-                threshold_mode = "relative"
-                t0 = time.time()
-                explanation = explain(explainer, image)
-                torch.cuda.empty_cache()
-                tf = time.time()
-                runtime = round(tf - t0, 6)
-                print('%s(%d): %d/%d runtime=%.4fs' % (exp_name, percentile, i+1, len(true_positives.item()["1"]), runtime))
-                np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold if threshold_mode == "absolute" else percentile, image_name), explanation)
+            percentile = 0
+            threshold = 0
+            threshold_mapper = {
+                "absolute": [0],
+                "relative": [50, 60, 70, 80, 90]
+            }
+            for threshold_mode in threshold_mapper:
+                for threshold in threshold_mapper[threshold_mode]:
+                    threshold = threshold
+                    percentile = threshold
+                    t0 = time.time()
+                    explanation = explain(explainer, image)
+                    torch.cuda.empty_cache()
+                    tf = time.time()
+                    runtime = round(tf - t0, 6)
+                    print('%s(%s,%d): %d/%d runtime=%.4fs' % (exp_name, threshold_mode, threshold, i+1, len(true_positives.item()["1"]), runtime))
+                    np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold, image_name), explanation)
+            np.save("true_positive_explanations/%s/n_nodes" % exp_name, n_nodes)
         else:
             t0 = time.time()
             explanation = explain(explainer, image)

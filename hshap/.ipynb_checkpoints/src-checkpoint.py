@@ -6,7 +6,7 @@ import torch
 
 
 class Node:
-    def __init__(self, depth=0, path=None, score=None):
+    def __init__(self, depth=0, path=None, score=1):
         self.depth = depth
         self.path = path
         self.score = score
@@ -141,7 +141,7 @@ class Node:
                 path=np.concatenate((self.path, np.array([self.__str2mask(feature)])))
                 if self.path is not None
                 else np.array([self.__str2mask(feature)]),
-                score=score,
+                score=self.score * score,
             )
 
 
@@ -157,6 +157,7 @@ class Explainer:
         self.M = M
         self.masks = self.generateMasks()
         self.features = np.identity(self.M, dtype=np.bool).reshape((self.M, self.M))
+        self.n_nodes = None
         print(r"Initialized explainer with map size {}".format(self.size))
 
     def generateMasks(self):
@@ -178,7 +179,7 @@ class Explainer:
 
     def addNodeMask(self, node, map):
         startRow, endRow, startColumn, endColumn = node.pathMaskCoordinates(self.size)
-        print(startRow, endRow, startColumn, endColumn, node.score)
+        # print(startRow, endRow, startColumn, endColumn, node.score)
         nodeArea = (endRow - startRow) * (endColumn - startColumn)
         map[startRow:endRow, startColumn:endColumn] = node.score
         # map[startRow : endRow, startColumn : endColumn] = node.score / nodeArea
@@ -197,6 +198,7 @@ class Explainer:
         self.label = label
         self.minW = minW
         self.minH = minH
+        self.n_nodes = 0
         batch_size = 2
         main_node = Node()
         level = [main_node]
@@ -228,8 +230,9 @@ class Explainer:
                     )
                     for i, node in enumerate(batch):
                         node_outputs = batch_outputs[i]
+                        node_logits = torch.nn.Softmax(dim=1)(node_outputs)
                         # _, node_outputs = torch.max(node_outputs, 1)
-                        node_outputs = node_outputs[:, label]
+                        node_outputs = node_logits[:, label]
                         node_scores = node.children_scores(
                             self.masks, self.features, node_outputs
                         )
@@ -259,6 +262,7 @@ class Explainer:
                         child_score = layer_scores[i, j]
                         feature = self.features[j]
                         child = node.child(feature, child_score)
+                        self.n_nodes += 1
                         if child.leaf(self.size, self.minW, self.minH) is True:
                             leafs.append(child)
                         else:
@@ -269,4 +273,4 @@ class Explainer:
         saliency_map = np.zeros(self.size)
         for node in leafs:
             self.addNodeMask(node, saliency_map)
-        return saliency_map, leafs
+        return saliency_map, (self.n_nodes, leafs)
