@@ -122,7 +122,7 @@ class Node:
 
     def children_scores(self, masks, features, outputs):
         if self.leaf is True:
-            return []
+            return np.zeros(4)
         else:
             outputs_dictionary = {
                 self.__mask2str(mask): outputs[i] for i, mask in enumerate(masks)
@@ -241,9 +241,12 @@ class Explainer:
             flat_layer_scores = layer_scores.flatten()
             # print(flat_layer_scores)
             if threshold_mode == "absolute":
-                masked_layer_scores = np.ma.masked_greater(
+                if any(flat_layer_scores > threshold):
+                    masked_layer_scores = np.ma.masked_greater(
                     flat_layer_scores, threshold
                 ).mask.reshape(layer_scores.shape)
+                else:
+                    masked_layer_scores = np.zeros(layer_scores.shape, dtype="bool")
             if threshold_mode == "relative":
                 threshold = np.percentile(flat_layer_scores, percentile)
                 if threshold <= 0:
@@ -262,11 +265,11 @@ class Explainer:
                         child_score = layer_scores[i, j]
                         feature = self.features[j]
                         child = node.child(feature, child_score)
-                        self.n_nodes += 1
                         if child.leaf(self.size, self.minW, self.minH) is True:
                             leafs.append(child)
                         else:
                             next_level.append(child)
+                            self.n_nodes += 1
             level = next_level
             L = len(level)
             # print(L, len(leafs))

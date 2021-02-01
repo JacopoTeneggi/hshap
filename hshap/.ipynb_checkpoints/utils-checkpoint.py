@@ -56,7 +56,7 @@ def pil_loader(path):
         return img.convert("RGB")
 
 
-def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization):
+def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization, batch_size=None):
     perturbations_L = len(perturbation_sizes)
     tmp = torch.zeros(perturbations_L)
 
@@ -90,7 +90,16 @@ def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes,
             ]
 
     with torch.no_grad():
-        outputs = model(perturbed_batch)
+        if batch_size == None or m < batch_size:
+            outputs = model(perturbed_batch)
+        elif batch_size != None:
+            n_batch = int(m/batch_size) + 1 if m % batch_size != 0 else int(m/batch_size)
+            outputs = torch.zeros(m, 2)
+            for batch_id in np.arange(0, n_batch):
+                # print(batch_id)
+                start = batch_id * batch_size
+                finish = (batch_id + 1) * batch_size
+                outputs[start:finish] = model(perturbed_batch[start:finish]).cpu()
         logits = torch.nn.Softmax(dim=1)(outputs).cpu()[:, 1]
         # logits = torch.log10(logits)
         torch.cuda.empty_cache()

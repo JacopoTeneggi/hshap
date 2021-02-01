@@ -23,7 +23,7 @@ from gradcam import GradCAM, GradCAMpp
 from RDE.ComputeExplainability import generate_explainability_map 
 from lime import lime_image
 
-os.environ["CUDA_VISIBLE_DEVICES"]="9"
+os.environ["CUDA_VISIBLE_DEVICES"]="4"
 
 device = torch.device("cuda:0")
 torch.backends.cudnn.deterministic = True
@@ -39,7 +39,6 @@ model.eval()
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    # transforms.Normalize([0.7206, 0.7204, 0.7651], [0.2305, 0.2384, 0.1706])
     transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
 ])
 
@@ -168,14 +167,34 @@ def lime_classifier(images):
 
 def lime_explain(limexp, image_RGB):
     lime_input = np.array(image_RGB)
-    lime_explanation = explainer.explain_instance(lime_input, lime_classifier, top_labels=2, hide_color=1, num_samples=1000) 
+    lime_explanation = explainer.explain_instance(lime_input, lime_classifier, top_labels=2, hide_color=1, num_samples=200) 
     _, mask = lime_explanation.get_image_and_mask(lime_explanation.top_labels[0], positive_only=False, num_features=2, hide_rest=False)
     explanation = mask
     return explanation
 
 exp_mapper = [
     {
-        "name": "hexp",
+        "name": "hexp/absolute_0",
+        "init": init_hexp,
+        "explain": hexp_explain
+    },
+    {
+        "name": "hexp/relative_50",
+        "init": init_hexp,
+        "explain": hexp_explain
+    },
+    {
+        "name": "hexp/relative_60",
+        "init": init_hexp,
+        "explain": hexp_explain
+    },
+    {
+        "name": "hexp/relative_70",
+        "init": init_hexp,
+        "explain": hexp_explain
+    },
+    {
+        "name": "hexp/relative_90",
         "init": init_hexp,
         "explain": hexp_explain
     },
@@ -216,58 +235,65 @@ exp_mapper = [
     }
 ]
 
-DATA_DIR = "/export/gaon1/data/jteneggi/data/synthetic/datasets"
-# df_training = pd.read_json("/export/gaon1/data/jteneggi/data/malaria/training.json")
-# df_test = pd.read_json("/export/gaon1/data/jteneggi/data/malaria/test_cropped.json")
-# frames = [df_training, df_test]
-# df_merged = pd.concat(frames, ignore_index=True)
-# ADD IMAGE_NAME COLUMN TO DATAFRAME
-# image_names = []
-# for i, row in df_merged.iterrows():
-#     image_names.append(os.path.basename(row["image"]["pathname"]))
-# df_merged["image_name"] = image_names
+c = [1, 6]
+true_positives = np.load("true_positives.npy", allow_pickle=True).item()
 
-c = np.arange(0, 9) + 1
-true_positives = np.load("true_positives.npy", allow_pickle=True)
-for exp in exp_mapper[-2:]:
-    exp_name = exp["name"]
-    explainer = exp["init"]()
-    explain = exp["explain"]
-    print("Initialized %s" % exp_name)
-    for n in c:
-        for i, image_path in enumerate(true_positives.item()[str(n)]):
+comp_times = {}
+
+for n in c:
+    for exp in exp_mapper:
+        exp_name = exp["name"]
+        explainer = exp["init"]()
+        explain = exp["explain"]
+        print("Initialized %s" % exp_name)
+        
+        comp_times = []
+    
+        # if exp_name == "hexp":
+        #     comp_times[exp_name] = {}
+        #     for threshold_mode in threshold_mapper:
+        #         for threshold in threshold_mapper[threshold_mode]:
+        #             comp_times[exp_name][f"{threshold_mode}_{threshold}"] = []
+        # else:
+        #     comp_times[exp_name] = []
+        
+        for i, image_path in enumerate(true_positives[str(n)]):
             image_name = os.path.basename(image_path)
             image = Image.open(image_path)
             image_RGB = image.convert("RGB")
             image_t = transform(image)
-            if exp_name == "hexp":
-                percentile = 0
-                threshold = 0
-                threshold_mapper = {
-                    "absolute": [0],
-                    "relative": [50, 60, 70, 80, 90]
-                }
-                for threshold_mode in threshold_mapper:
-                    for threshold in threshold_mapper[threshold_mode]:
-                        threshold = threshold
-                        percentile = threshold
-                        t0 = time.time()
-                        explanation = explain(explainer, image_t)
-                        torch.cuda.empty_cache()
-                        tf = time.time()
-                        runtime = round(tf - t0, 6)
-                        print('%s(%s,%d): %d/%d(%d) runtime=%.4fs' % (exp_name, threshold_mode, threshold, i+1, len(true_positives.item()["1"]), n, runtime))
-                        np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold, image_name), explanation)
-                np.save("true_positive_explanations/%s/n_nodes" % exp_name, n_nodes)
+            if "hexp" in exp_name:
+                _threshold = exp_name.split("/")[1].split("_")
+                threshold_mode = _threshold[0]
+                threshold_value = int(_threshold[1])
+                threshold = threshold_value
+                percentile = threshold_value
+                # for threshold_mode in threshold_mapper:
+                #     for threshold in threshold_mapper[threshold_mode]:
+                #         mode_name = f"{threshold_mode}_{threshold}"
+                #         threshold = threshold
+                #         percentile = threshold
+                #         t0 = time.time()
+                #         explanation = explain(explainer, image_t)
+                #         torch.cuda.empty_cache()
+                #         tf = time.time()
+                #         runtime = round(tf - t0, 6)
+                #         comp_times[exp_name][mode_name].append(runtime)
+                #         print('%s(%s,%d): %d/%d(%d) runtime=%.4fs' % (exp_name, threshold_mode, threshold, i+1, len(true_positives.item()[str(n)]), n, runtime))
+                #         np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold, image_name), explanation)
+                # np.save("true_positive_explanations/%s/n_nodes" % exp_name, n_nodes)
+            # else:
+            t0 = time.time()
+            if exp_name == "lime":
+                explanation = explain(explainer, image_RGB)
             else:
-                t0 = time.time()
-                if exp_name == "lime":
-                    explanation = explain(explainer, image_RGB)
-                else:
-                    explanation = explain(explainer, image_t)
-                torch.cuda.empty_cache()
-                tf = time.time()
-                runtime = round(tf - t0, 6)
-                print('%s: %d/%d(%d) runtime=%.4fs' % (exp_name, i+1, len(true_positives.item()[str(n)]), n, runtime))
-                np.save("true_positive_explanations/%s/%s" % (exp_name, image_name), explanation)
+                explanation = explain(explainer, image_t)
+            torch.cuda.empty_cache()
+            tf = time.time()
+            runtime = round(tf - t0, 6)
+            comp_times.append(runtime)
+            print('%s: %d/%d(%d) runtime=%.4fs' % (exp_name, i+1, len(true_positives[str(n)]), n, runtime))
+            np.save("true_positive_explanations/%s/%s" % (exp_name, image_name), explanation)
+
+        np.save(os.path.join("true_positive_explanations", exp_name, f"comp_times_{n}.npy"), comp_times)
             

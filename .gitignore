@@ -2,4 +2,4 @@
 .ipynb_checkpoints
 data
 hshap/experiments/**/true_positive_explanations/
-hshap/experiments/**/LOR
+hshap/experiments/**/LOR/
