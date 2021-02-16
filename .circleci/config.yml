@@ -6,7 +6,7 @@ orbs:
 workflows:
   test-and-build:
     jobs:
-      - test_and_build
+      - test-and-build
 
 jobs:
   test-and-build:
