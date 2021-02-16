@@ -34,9 +34,9 @@ def make_masks(M: int) -> np.ndarray:
     """
     Make all required masks to compute Shapley values given the number of features M
     """
-    masks = np.ones((1, M), dtype=np.bool)
+    masks = np.ones((1, M), dtype=bool)
     for i in range(M):
-        s = np.zeros(M, dtype=np.bool)
+        s = np.zeros(M, dtype=bool)
         s[0:i] = 1
         p = permutations(s)
         a = np.array(list(set(p)))
@@ -147,7 +147,8 @@ def children_scores(
         mask2str(mask): label_logits[i] for i, mask in enumerate(masks)
     }
     return np.array(
-        [shapley_phi(logits_dictionary, feature, masks) for feature in features]
+        [shapley_phi(logits_dictionary, feature, masks) for feature in features],
+        dtype=object,
     )
 
 

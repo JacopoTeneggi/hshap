@@ -3,4 +3,5 @@
 data
 hshap/experiments/
 **/__pycache__/
+venv/
 
