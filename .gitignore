@@ -5,4 +5,5 @@ data
 experiments/
 **/__pycache__/
 venv/
+docs/
 
