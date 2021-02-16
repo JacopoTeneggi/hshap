@@ -2,4 +2,5 @@
 .ipynb_checkpoints
 data
 hshap/experiments/
+**/__pycache__/
 
