@@ -1,7 +1,8 @@
 .vscode
 .ipynb_checkpoints
+.coverage
 data
-hshap/experiments/
+experiments/
 **/__pycache__/
 venv/
 
