@@ -177,4 +177,4 @@ def test_child_scores():
     label_logits = torch.Tensor([[0], [1], [1], [1]])
 
     children = children_scores(label_logits, masks=masks, features=features)
-    assert (children == [.5, .5]).all()
+    assert (children == [0.5, 0.5]).all()
