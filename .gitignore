@@ -4,6 +4,8 @@
 data
 experiments/
 **/__pycache__/
+.pytest_cache/
 venv/
 docs/
+**.egg-info/
 

@@ -70,7 +70,6 @@ def mask(path: np.ndarray, x: Tensor, background: Tensor) -> torch.Tensor:
         level = path[-1]
         center = ((coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2)
         feature_ids = np.where(level == 1)[0]
-        print(feature_ids)
         for feature_id in feature_ids:
             (feature_row, feature_column) = (int(feature_id / 2), feature_id % 2)
             feature_coords = coords.copy()

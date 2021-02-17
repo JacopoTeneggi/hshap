@@ -1,7 +1,4 @@
 import numpy as np
-from numpy.lib import utils
-from scipy.special import comb
-from itertools import permutations
 import torch
 from torch import Tensor
 from hshap.utils import (
@@ -11,6 +8,7 @@ from hshap.utils import (
     enumerate_batches,
     children_scores,
 )
+from typing import Callable
 
 
 class Node:
@@ -27,9 +25,9 @@ class Node:
         q[0] = len(masks)
 
         masked_inputs = x.repeat(q)
-        for i, mask in enumerate(masks):
+        for i, _mask in enumerate(masks):
             masked_inputs[i] = mask(
-                np.concatenate((self.path, np.expand_dims(mask, axis=0)), axis=0),
+                np.concatenate((self.path, np.expand_dims(_mask, axis=0)), axis=0),
                 x,
                 background,
             )
@@ -37,10 +35,17 @@ class Node:
 
 
 class Explainer:
-    def __init__(self, model, background, M=4):
+    def __init__(
+        self,
+        model: Callable[[Tensor], Tensor],
+        background: Tensor,
+        min_size: int,
+        M: int = 4,
+    ) -> None:
         self.model = model
         self.background = background
         self.size = (self.background.shape[1], self.background.shape[2])
+        self.stop_l = np.log(min(self.size) / min_size) // np.log(2) + 1
         self.M = M
         self.masks = make_masks(M)
         self.features = hshap_features(M)
@@ -55,13 +60,11 @@ class Explainer:
         self,
         x: Tensor,
         label: int,
-        min_size: int,
-        threshold_mode="absolute",
+        threshold_mode: str = "absolute",
         threshold=0,
         percentile=50,
-    ):
+    ) -> np.ndarray:
         # Define auxilliary variables
-        self.stop_l = np.log(min(self.size) / min_size) // np.log(2) + 1
         batch_size = 2
         # Initialize root node
         root_node = Node(np.array([[1, 1, 1, 1]]))
@@ -95,11 +98,14 @@ class Explainer:
                     torch.cuda.empty_cache()
 
             flat_layer_scores = layer_scores.flatten()
-
+            print(flat_layer_scores)
             if threshold_mode == "absolute":
-                masked_layer_scores = np.ma.masked_greater(
-                    flat_layer_scores, threshold
-                ).mask.reshape(layer_scores.shape)
+                if any(flat_layer_scores > threshold):
+                    masked_layer_scores = np.ma.masked_greater(
+                        flat_layer_scores, threshold
+                    ).mask.reshape(layer_scores.shape)
+                else:
+                    masked_layer_scores = np.zeros(layer_scores.shape)
             if threshold_mode == "relative":
                 threshold = np.percentile(flat_layer_scores, percentile)
                 if threshold <= 0:
@@ -136,5 +142,6 @@ class Explainer:
             saliency_map += mask(
                 leaf.path, torch.ones(1, self.size[0], self.size[1]), background
             )
-        saliency_map /= sum(saliency_map.flatten())
+        norm = sum(saliency_map.flatten())
+        saliency_map = saliency_map/norm if norm > 0 else saliency_map
         return saliency_map[0].numpy(), leafs

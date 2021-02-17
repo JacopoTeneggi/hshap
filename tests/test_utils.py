@@ -60,6 +60,10 @@ def test_mask_single_level():
     x = torch.ones(1, 4, 4)
     background = torch.zeros(1, 4, 4)
 
+    path = np.array([])
+    masked_x = mask(path, x, background)
+    assert torch.all(masked_x.eq(x))
+
     path = np.array([[0, 0, 0, 0]])
     masked_x = mask(path, x, background)
     assert torch.all(masked_x.eq(background))
