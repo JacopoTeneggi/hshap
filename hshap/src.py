@@ -143,5 +143,5 @@ class Explainer:
                 leaf.path, torch.ones(1, self.size[0], self.size[1]), background
             )
         norm = sum(saliency_map.flatten())
-        saliency_map = saliency_map/norm if norm > 0 else saliency_map
+        saliency_map = saliency_map / norm if norm > 0 else saliency_map
         return saliency_map[0].numpy(), leafs
