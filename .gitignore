@@ -1,6 +1,12 @@
 .vscode
 .ipynb_checkpoints
+.coverage
 data
 experiments/**/true_positive_explanations/
 experiments/**/LOR/
 experiments/**/RDE
+**/__pycache__/
+.pytest_cache/
+venv/
+docs/
+**.egg-info/

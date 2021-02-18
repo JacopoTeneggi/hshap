@@ -1,64 +1,161 @@
-# PYTORCH IMPORT
+from typing import Generator, Iterable, Tuple
 import torch
-import torch.utils.data as data
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import Tensor
+from itertools import permutations
 import numpy as np
-import numpy.ma as ma
+from functools import reduce
 
-# PIL IMPORT
-from PIL import Image
-
-# MATPLOTLIB IMPORT
-import matplotlib.pyplot as plt
-
-# SYS IMPORTS
-import os
-import glob
+factorial = np.math.factorial
 
 
-class RSNASickDataset(data.Dataset):
-    """Custom Sick RSNA Dataset"""
-
-    def __init__(self, root_dir, transform):
-        self.root_dir = root_dir
-        self.samples = glob.glob(os.path.join(root_dir, "*.png"))
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, index):
-        path = self.samples[index]
-        sample = self.loader(path)
-        sample = self.transform(sample)
-        return sample
-
-    def loader(self, path):
-        from torchvision import get_image_backend
-
-        if get_image_backend() == "accimage":
-            import accimage
-
-            try:
-                return accimage.Image(path)
-            except IOError:
-                # Potentially a decoding problem, fall back to PIL.Image
-                return pil_loader(path)
+def enumerate_batches(
+    collection: Iterable, batch_size: int
+) -> Generator[Tuple[int, list], None, None]:
+    """
+    Batch enumerator
+    """
+    L = len(collection)
+    for i, first_el in enumerate(range(0, L, batch_size)):
+        last_el = first_el + batch_size
+        if last_el < L:
+            yield i, collection[first_el:last_el]
         else:
-            return pil_loader(path)
+            yield i, collection[first_el:]
 
 
-def pil_loader(path):
-    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
-    with open(path, "rb") as f:
-        img = Image.open(f)
-        return img.convert("RGB")
+def hshap_features(M: int) -> np.ndarray:
+    """
+    Make the required M features
+    """
+    return np.identity(M, dtype=int).reshape((M, M))
 
 
-def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization, batch_size=None):
-    perturbations_L = len(perturbation_sizes)
-    tmp = torch.zeros(perturbations_L)
+def make_masks(M: int) -> np.ndarray:
+    """
+    Make all required masks to compute Shapley values given the number of features M
+    """
+    masks = np.ones((1, M), dtype=bool)
+    for i in range(M):
+        s = np.zeros(M, dtype=bool)
+        s[0:i] = 1
+        p = permutations(s)
+        a = np.array(list(set(p)))
+        masks = np.concatenate((masks, a))
+    return masks
+
+
+def mask(path: np.ndarray, x: Tensor, background: Tensor) -> torch.Tensor:
+    """
+    Creates a masked copy of x based on node.path and the specified background
+    """
+    _x = background.clone()
+    if len(path) == 0:
+        return x.clone()
+    if sum(path[-1]) == 0:
+        return _x
+    else:
+        coords = np.array([[0, 0], [_x.size(1), _x.size(2)]], dtype=int)
+        for level in path[:-1]:
+            if sum(level) == 1:
+                center = (
+                    (coords[0][0] + coords[1][0]) / 2,
+                    (coords[0][1] + coords[1][1]) / 2,
+                )
+                feature_id = np.where(level == 1)[0]
+                (feature_row, feature_column) = (int(feature_id / 2), feature_id % 2)
+                coords[0][0] += feature_row * center[0]
+                coords[0][1] += feature_column * center[1]
+                coords[1][0] -= (1 - feature_row) * center[0]
+                coords[1][1] -= (1 - feature_column) * center[1]
+        level = path[-1]
+        center = ((coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2)
+        feature_ids = np.where(level == 1)[0]
+        for feature_id in feature_ids:
+            (feature_row, feature_column) = (int(feature_id / 2), feature_id % 2)
+            feature_coords = coords.copy()
+            feature_coords[0][0] += feature_row * center[0]
+            feature_coords[0][1] += feature_column * center[1]
+            feature_coords[1][0] -= (1 - feature_row) * center[0]
+            feature_coords[1][1] -= (1 - feature_column) * center[1]
+            _x[
+                :,
+                feature_coords[0][0] : feature_coords[1][0],
+                feature_coords[0][1] : feature_coords[1][1],
+            ] = x[
+                :,
+                feature_coords[0][0] : feature_coords[1][0],
+                feature_coords[0][1] : feature_coords[1][1],
+            ]
+        return _x
+
+
+def mask2str(mask: np.ndarray) -> str:
+    """
+    Convert a mask from array to string
+    """
+    return reduce(lambda a, b: str(a) + str(b), mask.astype(int))
+
+
+def str2mask(string: str) -> np.ndarray:
+    """
+    Convert a string into mask
+    """
+    L = len(string)
+    mask = np.empty((L,))
+    for i in range(L):
+        mask[i] = int(string[i])
+    return mask
+
+
+DEFAULT_M = 4
+DEFAULT_MASKS = make_masks(DEFAULT_M)
+DEFAULT_FEATURES = hshap_features(DEFAULT_M)
+
+
+def shapley_phi(
+    logits_dictionary: dict, feature: np.ndarray, masks: np.ndarray = DEFAULT_MASKS
+) -> float:
+    """
+    Compute Shapley coefficient of a feature
+    """
+    d = len(feature)
+    feature_id = np.where(feature == 1)
+    _set_id = np.where(masks[:, feature_id[0][0]] == 0)
+    _set = masks[_set_id]
+    phi = 0
+    for s in _set:
+        sUi = s + feature
+        phi += (
+            factorial(sum(s))
+            * factorial(d - sum(s) - 1)
+            / factorial(d)
+            * (logits_dictionary[mask2str(sUi)] - logits_dictionary[mask2str(s)])
+        )
+    return phi
+
+
+def children_scores(
+    label_logits: Tensor,
+    masks: np.ndarray = DEFAULT_MASKS,
+    features: np.ndarray = DEFAULT_FEATURES,
+) -> np.ndarray:
+    """
+    Compute Shapley coefficients of children features
+    """
+    logits_dictionary = {
+        mask2str(mask): label_logits[i] for i, mask in enumerate(masks)
+    }
+    return np.array(
+        [shapley_phi(logits_dictionary, feature, masks) for feature in features],
+        dtype=object,
+    )
+
+
+def compute_perturbed_logits(model, image, explanation, perturbation_sizes):
+    # DEFINE PERTURBATION SIZES
+    # exp_x = np.linspace(-1, 0, 20)
+    # perturbation_sizes = np.sort(1.1 - 10 ** (exp_x))
+    # perturbations_L = len(perturbation_sizes)
 
     # IDENTIFY SALIENT POINTS AND RANK THEM
     activation_threshold = 0
@@ -66,555 +163,26 @@ def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes,
     salient_rows = salient_points[0]
     salient_columns = salient_points[1]
     scores = explanation[salient_points]
-    ranks = np.argsort(scores)
     L = len(scores)
-    # print(L)
-    
-    masked_perturbations = ma.masked_greater(perturbation_sizes, L)
-    valid_perturbations = masked_perturbations.compressed()
-    # print(valid_perturbations)
-    m = len(valid_perturbations)
-    # print(m)
+    ranks = np.argsort(scores)
+
     # PERTURBATE IMAGES AND EVALUATE LOGITS
-    _input = image.unsqueeze(0)    
-    perturbed_batch = _input.repeat(m, 1, 1, 1)
-    for k, perturbation_size in enumerate(valid_perturbations):
-        # perturbation_L = round(perturbation_size * L)
-        # print(perturbation_size)
-        if perturbation_size > 0:
-            perturbed_ids = ranks[-perturbation_size:]
-            perturbed_rows = salient_rows[perturbed_ids]
-            perturbed_columns = salient_columns[perturbed_ids]
-            perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
-                :, perturbed_rows, perturbed_columns
-            ]
+    perturbed_batch = image.unsqueeze(0).repeat(perturbations_L, 1, 1, 1)
+    for k, perturbation_size in enumerate(perturbation_sizes):
+        print("Perturbation={}".format(perturbation_size))
+
+        perturbation_L = round(perturbation_size * L)
+        perturbed_ids = ranks[-perturbation_L:]
+        perturbed_rows = salient_rows[perturbed_ids]
+        perturbed_columns = salient_columns[perturbed_ids]
+        perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
+            :, perturbed_rows, perturbed_columns
+        ]
 
     with torch.no_grad():
-        if batch_size == None or m < batch_size:
-            outputs = model(perturbed_batch)
-        elif batch_size != None:
-            n_batch = int(m/batch_size) + 1 if m % batch_size != 0 else int(m/batch_size)
-            outputs = torch.zeros(m, 2)
-            for batch_id in np.arange(0, n_batch):
-                # print(batch_id)
-                start = batch_id * batch_size
-                finish = (batch_id + 1) * batch_size
-                outputs[start:finish] = model(perturbed_batch[start:finish]).cpu()
-        logits = torch.nn.Softmax(dim=1)(outputs).cpu()[:, 1]
-        # logits = torch.log10(logits)
+        outputs = model(perturbed_batch)
+        del perturbed_batch
         torch.cuda.empty_cache()
-        # print(logits)
-    
-    for i in np.arange(m):
-        tmp[i] = logits[i]
-        if normalization == "original":
-            tmp[i] /= logits[0]
-            # print(tmp[i])
+        logits = torch.log10(torch.nn.Softmax(dim=1)(outputs))
 
-    return tmp
-
-
-def datasetMeanStd(loader):
-    """Computes the mean and standard deviation of a dataloader of 3 channel images
-
-    Parameters
-    ----------
-    loader : torch.utils.data.DataLoader
-        the dataloader whose mean is computed
-
-    Returns
-    -------
-    mean : numpy array of shape (3,)
-        the channel-wise mean of the dataloader
-    std : numpy array of shape (3,)
-        the channel-wise standard deviation of the dataloader
-    """
-
-    mean = 0.0
-    std = 0.0
-    N = len(loader.dataset)
-    for images, _ in loader:
-        batch_samples = images.size(0)
-        images = images.view(batch_samples, images.size(1), -1)
-        mean += images.mean(2).sum(0)
-        std += images.std(2).sum(0)
-    mean /= N
-    std /= N - 1
-    mean = mean.numpy()
-    std = std.numpy()
-    return mean, std
-
-
-def denormalize(im, mean, std):
-    """Restore an image to its range before normalization
-
-    Parameters
-    ----------
-    im : numpy array with 3 channels
-        the image to denormalize
-    mean : numpy array of shape (3,)
-        the channel-wise mean of the dataloader
-    std : numpy array of shape (3,)
-        the channel-wise standard deviation of the dataloader
-
-    Returns
-    -------
-    denorm : numpy array with 3 channels
-        the denormalized image
-    """
-
-    denorm = im * std + mean
-    return denorm
-
-
-def input2image(input, mean, std):
-    """Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
-
-    Parameters
-    ----------
-    input : torch tensor with 3 channels
-        the input tensor to process
-    mean : numpy array of shape (3,)
-        the channel-wise mean of the dataloader
-    std : numpy array of shape (3,)
-        the channel-wise standard deviation of the dataloader
-
-    Returns
-    -------
-    denorm : numpy array with 3 channels
-        the denormalized image
-    """
-
-    sample_image = input.numpy().transpose(1, 2, 0)
-    denorm = denormalize(sample_image, mean, std)
-    return denorm
-
-
-def display_image(im, true_label, predicted_label=None, figure_size=(8, 5)):
-    """Convert an torch tensor input to a neural net as a image in numpy array format, denormalized.
-
-    Parameters
-    ----------
-    im : numpy array with 3 channels
-        the image to display
-    true_label : int in {0,1}
-        the ground truth label of im
-    true_label : int in {0,1}, optional
-        the predicted truth label of im by the neural network
-    figure_size : tuple of ints, optional
-        size of the matplotlib.pyplot.figure object
-    """
-
-    plt.figure(figsize=figure_size)
-    plt.imshow(im)
-    title_ = "True label : " + str(true_label)
-    if predicted_label != None:
-        title_ += "/ Predicted : " + str(predicted_label)
-    plt.title(title_)
-
-
-def almost_equal(n1, n2, e):
-    """Determine if n1 and n2 are almost equal, at a tolerance e.
-
-    Parameters
-    ----------
-    n1 : float
-        the first number
-    n2 : float
-        the second number
-    e : float
-        the tolerance
-
-    Returns
-    -------
-    verdict : bool
-        whether or not they are almost equal
-    """
-
-    verdict = abs(n1 - n2) < e
-    return verdict
-
-
-def network_has_converged(loss, e):
-    """Determine if n1 and n2 are almost equal, at a tolerance e.
-
-    Parameters
-    ----------
-    loss : list of floats
-        the list of losses during training
-    e : float
-        the tolerance for the stopping criterion
-
-    Returns
-    -------
-    converged : bool
-        whether or not training has converged
-    """
-
-    if len(loss) < 3:
-        converged = False
-    else:
-        converged = almost_equal(loss[-3], loss[-2], e) and almost_equal(
-            loss[-3], loss[-1], e
-        )
-    return converged
-
-
-def training_accuracy(network, loader):
-    """Determine the accuracy of the predictions of a network.
-
-    Parameters
-    ----------
-    network : torch.nn.Module or subclass
-        the network to test
-    loader : torch.utils.data.DataLoader
-        the training dataloader
-
-    Returns
-    -------
-    accuracy : float betwee 0. and 100.
-        the training accuracy
-    """
-
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for data in loader:
-            images, labels = data
-            outputs = network(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    accuracy = 100 * correct / total
-    return accuracy
-
-
-def validation_stats(network, loader, criterion):
-    """Judge the training of the network on the validation set.
-
-    Parameters
-    ----------
-    network : torch.nn.Module or subclass
-        the network to test
-    loader : torch.utils.data.DataLoader
-        the validation dataloader
-    criterion : torch.nn loss function
-        the loss function criterion
-
-    Returns
-    -------
-    accuracy : float between 0. and 100.
-        the validation accuracy
-    normalized_loss : float
-        the loss per input
-    """
-
-    total_loss = 0
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in loader:
-            images, labels = data
-            outputs = network(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-            loss = criterion(outputs, labels)
-            total_loss += loss.item()
-
-    accuracy, normalized_loss = (
-        100 * correct / total,
-        total_loss / len(loader.dataset),
-    )
-    return accuracy, normalized_loss
-
-
-def plot_training(train_loss, val_loss, train_accuracy, val_accuracy):
-    """Plot the training loss and accuracy of the network on the training and validation set.
-
-    Parameters
-    ----------
-    train_loss : list of floats
-        the loss on the training set
-    val_loss : list of floats
-        the loss on the validation set
-    train_accuracy : float between 0. and 100.
-        the accuracy on the training set
-    val_accuracy : float between 0. and 100.
-        the accuracy on the validations set
-    """
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-    x_scale = np.linspace(0, len(train_loss) - 1, len(train_loss))
-    _ = ax1.plot(x_scale, train_loss)
-    _ = ax1.plot(x_scale, val_loss)
-    ax1.legend(["Loss on the training set", "Loss on the validation set"])
-    ax1.set_xlabel("Number of generations")
-    ax1.set_ylabel("Evaluation of the loss function")
-
-    x_scale = np.linspace(0, len(train_accuracy) - 1, len(train_accuracy))
-    _ = ax2.plot(x_scale, train_accuracy)
-    _ = ax2.plot(x_scale, val_accuracy)
-    ax2.legend(["Training accuracy", "Validation accuracy"])
-    ax2.set_xlabel("Number of generations")
-    ax2.set_ylabel("Accuracy ")
-
-
-def test(net, loader):
-    """Confront the network to the testing set.
-
-    Parameters
-    ----------
-    net : torch.nn.Module or subclass
-        the network to test
-    loader : torch.utils.data.DataLoader
-        the testing dataloader
-
-    Returns
-    -------
-    wrong_im : list of torch tensors
-        inputs classified wrongly
-    wrong_label : list of ints ({0,1})
-        corresponding labels
-    wrong_label : list of ints ({0,1})
-        corresponding predictions (redundant)
-    """
-
-    correct = 0
-    total = 0
-    wrong_im = []
-    wrong_label = []
-    wrongly_predicted_label = []
-
-    with torch.no_grad():
-        for data in loader:
-            images, labels = data
-
-            outputs = net(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-            k = 0
-            for truth in predicted == labels:
-                if not truth:
-                    wrong_im.append(images[k])
-                    wrong_label.append(int(labels[k]))
-                    wrongly_predicted_label.append(int(predicted[k]))
-                k += 1
-
-    print(
-        "Accuracy of the network on the "
-        + str(total)
-        + " test images: %.3f %%" % (100 * correct / total)
-    )
-
-    print("Number of mistakes : " + str(total - correct))
-    return wrong_im, wrong_label, wrongly_predicted_label
-
-
-def train(net, optimizer, criterion, max_epochs, dataloader, valloader):
-    """Train a CNN.
-
-    Parameters
-    ----------
-    net : torch.nn.Module or subclass
-        the network to test
-    optimizer : instance of a torch.optim class
-        the optimizer for the CNN
-    criterion : torch.nn loss function
-        the loss function criterion
-    max_epochs : int
-        maximum number of epochs before terminating training early
-    dataloader : torch.utils.data.DataLoader
-        dataloader for the training set
-    valloader : torch.utils.data.DataLoader
-        dataloader for the validation set
-
-
-    Returns
-    -------
-    train_loss : list of floats
-        the loss on the training set
-    val_loss : list of floats
-        the loss on the validation set
-    train_accuracy : float between 0. and 100.
-        the accuracy on the training set
-    val_accuracy : float between 0. and 100.
-        the accuracy on the validations set
-    """
-
-    converged = False
-    epsilon = 0.0001
-    train_loss, val_loss, train_accuracy, val_accuracy = [], [], [], []
-    for epoch in range(max_epochs):  # loop over the dataset multiple times
-
-        running_loss = 0.0
-        if not converged:
-            for i, data in enumerate(dataloader, 0):
-                # get the inputs; data is a list of [inputs, labels]
-                inputs, labels = data
-
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
-                # forward + backward + optimize
-                outputs = net(inputs)
-                loss = criterion(outputs, labels)
-
-                loss.backward()
-                optimizer.step()
-
-                # plot loss
-                running_loss += loss.item()
-
-            train_loss.append(running_loss / len(dataloader.dataset))
-            train_accuracy.append(training_accuracy(net, dataloader))
-            A, L = validation_stats(net, valloader, criterion)
-            val_loss.append(L)
-            val_accuracy.append(A)
-
-            print(
-                "Generation %d. training loss: %.4f," % (epoch + 1, train_loss[-1]),
-                end="",
-            )
-            print(" training accuracy: %.2f " % (train_accuracy[-1]), end="%,")
-            print(" validation loss: %.4f," % (val_loss[-1]), end=" ")
-            print(" validation accuracy: %.2f " % (val_accuracy[-1]), end="% \n")
-
-            converged = network_has_converged(train_loss, epsilon)
-
-    if converged:
-        print("Network has converged.")
-    else:
-        print(
-            "Network hasn't been able to converge in "
-            + str(max_epochs)
-            + " generations."
-        )
-    return train_loss, val_loss, train_accuracy, val_accuracy
-
-
-class Net(nn.Module):
-    """CNN architecture for classifying images of 120 pixels in width and 100 in height."""
-
-    def __init__(self):
-        """Initialize the CNN."""
-
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool1 = nn.MaxPool2d(2)
-        self.conv2 = nn.Conv2d(6, 16, 4)
-        self.pool2 = nn.MaxPool2d(5)
-        self.fc1 = nn.Linear(16 * 9 * 11, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 2)
-        self.drop = nn.Dropout(p=0.5)
-
-    def forward(self, x):
-        """Perform forward propagation across the network.
-
-        Parameters
-        ----------
-        x : torch tensor
-            CNN input tensor images
-
-        Returns
-        -------
-        x : torch tensor
-            CNN output class labels
-        """
-
-        x = F.relu(self.conv1(x))
-        x = self.pool1(x)
-        x = F.relu(self.conv2(x))
-        x = self.pool2(x)
-        x = x.reshape(-1, self.num_flat_features(x))  # 16*9*11
-        x = self.drop(F.relu(self.fc1(x)))
-        x = self.drop(F.relu(self.fc2(x)))
-        x = self.fc3(x)
-        return x
-
-    def num_flat_features(self, x):
-        """Compute the number entries of one item in a batch.
-
-        Parameters
-        ----------
-        x : torch tensor
-            batch of inputs or processed inputs
-
-        Returns
-        -------
-        num_features : int
-            number of entries in one item
-        """
-
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
-
-class HdNet(nn.Module):
-    """CNN architecture for classifying images of 1200 pixels in width and 1000 in height."""
-
-    def __init__(self):
-        """Initialize the CNN."""
-
-        super(HdNet, self).__init__()
-        self.conv0 = nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5, stride=5)
-        self.pool0 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv1 = nn.Conv2d(6, 10, 5)
-        self.pool1 = nn.MaxPool2d(2)
-        self.conv2 = nn.Conv2d(10, 16, 4)
-        self.pool2 = nn.MaxPool2d(5)
-        self.fc1 = nn.Linear(16 * 9 * 11, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 2)
-        self.drop = nn.Dropout(p=0.5)
-
-    def forward(self, x):
-        """Perform forward propagation across the network.
-
-        Parameters
-        ----------
-        x : torch tensor
-            CNN input tensor images
-
-        Returns
-        -------
-        x : torch tensor
-            CNN output class labels
-        """
-
-        x = F.relu(self.conv0(x))
-        x = self.pool0(x)
-        x = F.relu(self.conv1(x))
-        x = self.pool1(x)
-        x = F.relu(self.conv2(x))
-        x = self.pool2(x)
-        x = x.view(-1, self.num_flat_features(x))  # 16*9*11
-        x = self.drop(F.relu(self.fc1(x)))
-        x = self.drop(F.relu(self.fc2(x)))
-        x = self.fc3(x)
-        return x
-
-    def num_flat_features(self, x):
-        """Compute the number entries of one item in a batch.
-
-        Parameters
-        ----------
-        x : torch tensor
-            batch of inputs or processed inputs
-
-        Returns
-        -------
-        num_features : int
-            number of entries in one item
-        """
-
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
+    return logits
