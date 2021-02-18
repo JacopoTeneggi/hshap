@@ -1,5 +1,6 @@
 .vscode
 .ipynb_checkpoints
 data
-hshap/experiments/**/true_positive_explanations/
-hshap/experiments/**/LOR/
+experiments/**/true_positive_explanations/
+experiments/**/LOR/
+experiments/**/RDE
