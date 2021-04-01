@@ -3,6 +3,7 @@
 .coverage
 data
 experiments/**/true_positive_explanations/
+experiments/**/true_positive_random_explanations/
 experiments/**/LOR/
 experiments/**/RDE
 **/__pycache__/
