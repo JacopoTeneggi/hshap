@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
+plt.rcParams.update({'font.size': 20})
 
 class RSNASickDataset(data.Dataset):
     """Custom Sick RSNA Dataset"""
@@ -56,9 +57,7 @@ def pil_loader(path):
         return img.convert("RGB")
 
 
-def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization, batch_size=None):
-    perturbations_L = len(perturbation_sizes)
-    tmp = torch.zeros(perturbations_L)
+def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization, random_sampling=False, batch_size=None, exp_name=None, image_name=None):
 
     # IDENTIFY SALIENT POINTS AND RANK THEM
     activation_threshold = 0
@@ -66,15 +65,13 @@ def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes,
     salient_rows = salient_points[0]
     salient_columns = salient_points[1]
     scores = explanation[salient_points]
-    ranks = np.argsort(scores)
     L = len(scores)
-    # print(L)
+    # print(f"number of relevant features = {L}")
+    ranks = np.argsort(scores)
     
     masked_perturbations = ma.masked_greater(perturbation_sizes, L)
     valid_perturbations = masked_perturbations.compressed()
-    # print(valid_perturbations)
     m = len(valid_perturbations)
-    # print(m)
     # PERTURBATE IMAGES AND EVALUATE LOGITS
     _input = image.unsqueeze(0)    
     perturbed_batch = _input.repeat(m, 1, 1, 1)
@@ -83,6 +80,7 @@ def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes,
         # print(perturbation_size)
         if perturbation_size > 0:
             perturbed_ids = ranks[-perturbation_size:]
+            # print(len(perturbed_ids))
             perturbed_rows = salient_rows[perturbed_ids]
             perturbed_columns = salient_columns[perturbed_ids]
             perturbed_batch[k, :, perturbed_rows, perturbed_columns] = ref[
@@ -96,20 +94,44 @@ def compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes,
             n_batch = int(m/batch_size) + 1 if m % batch_size != 0 else int(m/batch_size)
             outputs = torch.zeros(m, 2)
             for batch_id in np.arange(0, n_batch):
-                # print(batch_id)
                 start = batch_id * batch_size
                 finish = (batch_id + 1) * batch_size
                 outputs[start:finish] = model(perturbed_batch[start:finish]).cpu()
         logits = torch.nn.Softmax(dim=1)(outputs).cpu()[:, 1]
-        # logits = torch.log10(logits)
         torch.cuda.empty_cache()
-        # print(logits)
     
-    for i in np.arange(m):
-        tmp[i] = logits[i]
-        if normalization == "original":
-            tmp[i] /= logits[0]
-            # print(tmp[i])
+    if normalization == "original":
+        logits /= logits[0]
+        
+    tmp = []
+    # _min = 1
+    # min_k = 0
+    for k, size in enumerate(valid_perturbations):
+        tmp.append([size, logits[k]])
+        # if logits[k].item() < _min:
+        #     min_k = k
+        #     _min = logits[k].item()
+    
+    # print(exp_name, min_k, _min)
+    # fig = plt.figure(figsize=(42, 4))
+    # axes = fig.subplots(1, 3)
+    # ax = axes[0]
+    # ax.imshow(np.transpose(image.cpu().numpy(), (1, 2, 0)))
+    # ax.set_title(f"original image")
+    # ax.axes.xaxis.set_visible(False)
+    # ax.axes.yaxis.set_visible(False)
+    # ax = axes[1]
+    # ax.imshow(np.transpose(perturbed_batch[min_k].cpu().numpy(), (1, 2, 0)))
+    # ax.set_title(f"{exp_name} min LOR (k = {min_k})")
+    # ax.axes.xaxis.set_visible(False)
+    # ax.axes.yaxis.set_visible(False)
+    # ax = axes[2]
+    # ax.imshow(np.transpose(perturbed_batch[-1].cpu().numpy(), (1, 2, 0)))
+    # ax.set_title(f"{exp_name} complete ablation")
+    # ax.axes.xaxis.set_visible(False)
+    # ax.axes.yaxis.set_visible(False)
+    # plt.savefig(f"{image_name}_ablation_min_{exp_name}.eps")
+    # plt.close()
 
     return tmp
 

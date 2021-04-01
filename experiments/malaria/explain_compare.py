@@ -22,7 +22,7 @@ from gradcam import GradCAM, GradCAMpp
 from RDE.ComputeExplainability import generate_explainability_map 
 from lime import lime_image
 
-os.environ["CUDA_VISIBLE_DEVICES"]="3"
+os.environ["CUDA_VISIBLE_DEVICES"]="7"
 
 device = torch.device("cuda:0")
 torch.backends.cudnn.deterministic = True
@@ -50,14 +50,12 @@ def init_hexp():
     X, _ = next(_iter)
     ref = X.detach().mean(0)
     ref = ref.to(device)
-    # ref = torch.zeros((3, 1200, 1600)).to(device)
     hexp = hshap.src.Explainer(model, ref)
     return hexp
 
 n_nodes = []
 def hexp_explain(hexp, image):
-    explanation, (n, _) = hexp.explain(image, label=1, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold, minW=80, minH=80)
-    n_nodes.append((threshold_mode, threshold if threshold_mode == "absolute" else percentile, n))
+    (explanation, _) = hexp.explain(image, label=1, minW=20, minH=20, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold)
     return explanation
 
 def init_gradexp():
@@ -135,10 +133,10 @@ def gradcampp_explain(gradcampp, image):
     return explanation
 
 def RDE_explain(RDE_exp, image_t):
-    num_iter = 500
+    num_iter = 1000000
     step_size = 1e-3
     batch_size = 10
-    l1_lambda = 250
+    l1_lambda = 1000
     s, _ = generate_explainability_map(
         image_t, model, num_iter, step_size, batch_size, l1_lambda, device
     )
@@ -173,22 +171,7 @@ exp_mapper = [
         "explain": hexp_explain
     },
     {
-        "name": "hexp/relative_50",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_60",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_70",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_90",
+        "name": "hexp/relative_20",
         "init": init_hexp,
         "explain": hexp_explain
     },
@@ -242,11 +225,11 @@ df_merged["image_name"] = image_names
 
 true_positives_dict = np.load("true_positives.npy", allow_pickle=True).item()
 true_positives = []
-for c in true_positives_dict:
+for c in ["1"]:
     for image_path in true_positives_dict[c]:
         true_positives.append(image_path)
 
-for exp in exp_mapper[:5]:
+for exp in [exp_mapper[0]]:
     exp_name = exp["name"]
     explainer = exp["init"]()
     explain = exp["explain"]
@@ -254,7 +237,7 @@ for exp in exp_mapper[:5]:
     
     comp_times = []
     
-    for i, image_path in enumerate(true_positives):
+    for i, image_path in enumerate([true_positives[2]]):
         image_name = os.path.basename(image_path)
         image = Image.open(image_path)
         image_RGB = image.convert("RGB")
@@ -263,7 +246,7 @@ for exp in exp_mapper[:5]:
             _threshold = exp_name.split("/")[1].split("_")
             threshold_mode = _threshold[0]
             threshold_value = int(_threshold[1])
-            threshold = threshold_value
+            threshold = 0.00
             percentile = threshold_value
         t0 = time.time()
         if exp_name == "lime":

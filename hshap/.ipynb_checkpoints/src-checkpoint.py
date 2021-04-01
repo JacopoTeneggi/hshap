@@ -276,4 +276,4 @@ class Explainer:
         saliency_map = np.zeros(self.size)
         for node in leafs:
             self.addNodeMask(node, saliency_map)
-        return saliency_map, (self.n_nodes, leafs)
+        return saliency_map, leafs

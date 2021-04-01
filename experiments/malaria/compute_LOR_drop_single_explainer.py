@@ -15,7 +15,7 @@ from PIL import Image
 import hshap
 import pandas as pd
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "8"
 
 _device = "cuda:0"
 device = torch.device(_device)
@@ -52,10 +52,10 @@ ref_logits = torch.nn.Softmax(dim=1)(ref_output)
 print(ref_logits)
 print("Loaded reference")
 
-exp_mapper = ["hexp/absolute_0", "hexp/relative_60", "hexp/relative_70", "gradexp", "deepexp", "partexp", "gradcam", "gradcampp", "naive", "RDE", "lime"]
+exp_mapper = ["hexp/absolute_0", "hexp/relative_70", "gradexp", "deepexp", "partexp", "gradcam", "gradcampp", "naive", "RDE", "lime"]
 
 A = 1200*1600
-exp_x = np.linspace(np.log10(1/A), 0, 50)
+exp_x = np.linspace(np.log10(1/A), 0, 200)
 relative_perturbation_sizes = np.concatenate(([0], np.sort(10 ** (exp_x))))
 perturbation_sizes = np.round(A * relative_perturbation_sizes)
 perturbation_sizes = np.array(perturbation_sizes, dtype="int")
@@ -69,7 +69,7 @@ for c in true_positives_dict:
         true_positives.append(image_path)
 
 L = len(true_positives)
-for exp_name in exp_mapper[:3]:
+for exp_name in [exp_mapper[4]]:
     LOR_df = pd.DataFrame(columns=["exp_name", "perturbation_size", "logit"])
     exp_logits = torch.zeros((L, perturbations_L)).to(device)
     explanation_dir = os.path.join("true_positive_explanations", exp_name)
@@ -80,11 +80,9 @@ for exp_name in exp_mapper[:3]:
             explanation = torch.rand(image.size(1), image.size(2), device=torch.device("cpu")) + .5
         else:
             explanation = np.load(os.path.join(explanation_dir, "%s.npy" % image_name))
-        tmp = hshap.utils.compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization="original", batch_size=15)
-        exp_logits[i, :] = tmp
-        for perturbation, logit in zip(perturbation_sizes, tmp.cpu().numpy()):
-            if logit != 0:
-                LOR_df = LOR_df.append({"exp_name": exp_name, "perturbation_size": perturbation, "logit": logit}, ignore_index=True)
+        logits = hshap.utils.compute_perturbed_logits(model, ref, image, explanation, perturbation_sizes, normalization="original", batch_size=10)
+        for j, logit in enumerate(logits):
+            LOR_df = LOR_df.append({"exp_name": exp_name, "perturbation_size": logit[0], "logit": logit[1].numpy()}, ignore_index=True)
         print("%s: %d/%d computed perturbed logits" % (exp_name, i+1, L))
     np.save(os.path.join("LOR", "%s/results" % exp_name), exp_logits.cpu().numpy())
     LOR_df.to_csv(os.path.join("LOR", exp_name, "results.csv"))

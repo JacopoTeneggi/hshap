@@ -7,7 +7,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
+os.environ["CUDA_VISIBLE_DEVICES"]="7"
 
 device = torch.device("cuda:0")
 

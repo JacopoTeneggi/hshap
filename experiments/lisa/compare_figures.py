@@ -41,18 +41,25 @@ def annotate(ax, image_name):
             h = np.abs(lower_right_r - upper_left_r)
             rect = patches.Rectangle((upper_left_c, upper_left_r), w, h, linewidth=.5, edgecolor="g", facecolor="none")
             ax.add_patch(rect)
+            
+plt.rcParams.update({'font.size': 20})
 
-exp_mapper = ["hexp/absolute_0", "hexp/relative_50", "gradexp", "deepexp", "partexp", "gradcam", "gradcampp", "RDE", "lime", "lime_fast"]
+
+exp_mapper = ["hexp/absolute_0", "hexp/relative_70", "gradexp", "deepexp", "partexp", "lime", "gradcam"]
+exp_names = [r"$d$H-SHAP", r"$b$-H-SHAP", r"GradientExp", r"DeepExp", r"PartitionExp", r"LIME", "Grad-CAM"]
+
 true_positives = np.load("true_positives.npy", allow_pickle=True)
 np.random.seed(0)
 examples = np.random.choice(true_positives, size=300, replace=False)
-for image_path in tqdm(examples[:3]):
-    fig = plt.figure(figsize=(26, 4))
+for image_path in tqdm(examples[:10]):
+    fig = plt.figure(figsize=(42, 4))
     axes = fig.subplots(1, len(exp_mapper) + 1)
     image_name = os.path.basename(image_path)
     image = Image.open(image_path)
     ax = axes[0]
     ax.imshow(image)
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
     ax.set_title("image")
     annotate(ax, image_name)
     for j, exp_name in enumerate(exp_mapper):
@@ -64,6 +71,8 @@ for image_path in tqdm(examples[:3]):
         _max = max(_abs)
         ax.imshow(explanation, cmap="bwr")
         annotate(ax, image_name)
-        ax.set_title(exp_name)
+        ax.set_title(exp_names[j])
+        ax.axes.xaxis.set_visible(False)
+        ax.axes.yaxis.set_visible(False)
     plt.savefig("true_positive_explanations/figures/%s.eps" % image_name)
     plt.close()

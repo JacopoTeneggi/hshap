@@ -76,7 +76,7 @@ for i, image_path in enumerate(true_positives.item()["1"][:35]):
         _abs = np.abs(explanation.flatten())
         _max = max(_abs)
         # _max = np.percentile(_abs, 99.9)
-        print(_max)
+        # print(_max)
         ax.imshow(explanation, cmap="bwr", vmax=_max, vmin=-_max)
         # annotate(ax, image_name)
         ax.set_title(threshold)

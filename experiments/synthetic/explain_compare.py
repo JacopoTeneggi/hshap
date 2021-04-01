@@ -16,21 +16,27 @@ import time
 import pandas as pd
 import matplotlib.patches as patches
 import hshap
-from hshap.utils import Net
+from net import Net
 import shap
 from gradcam.utils import visualize_cam
 from gradcam import GradCAM, GradCAMpp
 from RDE.ComputeExplainability import generate_explainability_map 
 from lime import lime_image
 
-os.environ["CUDA_VISIBLE_DEVICES"]="4"
+def weights_init(m):
+    if isinstance(m, nn.Conv2d):
+        nn.init.xavier_uniform_(m.weight.data)
+        nn.init.normal_(m.bias.data)
+
+os.environ["CUDA_VISIBLE_DEVICES"]="7"
 
 device = torch.device("cuda:0")
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-torch.manual_seed(0)
+# torch.manual_seed(0)
 model = Net()
+# model.apply(weights_init)
 weight_path = "model2.pth"
 model.load_state_dict(torch.load(weight_path, map_location=device)) 
 model.to(device)
@@ -50,14 +56,11 @@ def init_hexp():
     X, _ = next(_iter)
     ref = X.detach().mean(0)
     ref = ref.to(device)
-    # ref = torch.zeros((3, 1200, 1600)).to(device)
     hexp = hshap.src.Explainer(model, ref)
     return hexp
 
-n_nodes = []
 def hexp_explain(hexp, image_t):
-    explanation, (n, _) = hexp.explain(image_t, label=1, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold, minW=5, minH=5)
-    n_nodes.append((threshold_mode, threshold if threshold_mode == "absolute" else percentile, n))
+    (explanation, _) = hexp.explain(image_t, label=1, minW=2, minH=2, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold)
     return explanation
 
 def init_gradexp():
@@ -141,10 +144,10 @@ def gradcampp_explain(gradcampp, image_t):
     return explanation
 
 def RDE_explain(RDE_exp, image_t):
-    num_iter = 20000
+    num_iter = 1000000
     step_size = 1e-3
     batch_size = 64
-    l1_lambda = 750
+    l1_lambda = 1000
     s, _ = generate_explainability_map(
         image_t, model, num_iter, step_size, batch_size, l1_lambda, device
     )
@@ -179,22 +182,7 @@ exp_mapper = [
         "explain": hexp_explain
     },
     {
-        "name": "hexp/relative_50",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_60",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
         "name": "hexp/relative_70",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_90",
         "init": init_hexp,
         "explain": hexp_explain
     },
@@ -218,16 +206,16 @@ exp_mapper = [
         "init": lambda: GradCAM(model, model.conv2),
         "explain": gradcam_explain
     },
-    {
-        "name": "gradcampp",
-        "init": lambda: GradCAMpp(model, model.conv2),
-        "explain": gradcampp_explain
-    },
-    {
-        "name": "RDE",
-        "init": lambda: None,
-        "explain": RDE_explain
-    },
+#     {
+#         "name": "gradcampp",
+#         "init": lambda: GradCAMpp(model, model.conv2),
+#         "explain": gradcampp_explain
+#     },
+#     {
+#         "name": "RDE",
+#         "init": lambda: None,
+#         "explain": RDE_explain
+#     },
     {
         "name": "lime",
         "init": init_lime,
@@ -235,7 +223,7 @@ exp_mapper = [
     }
 ]
 
-c = [1, 6]
+c = [6]
 true_positives = np.load("true_positives.npy", allow_pickle=True).item()
 
 comp_times = {}
@@ -248,15 +236,6 @@ for n in c:
         print("Initialized %s" % exp_name)
         
         comp_times = []
-    
-        # if exp_name == "hexp":
-        #     comp_times[exp_name] = {}
-        #     for threshold_mode in threshold_mapper:
-        #         for threshold in threshold_mapper[threshold_mode]:
-        #             comp_times[exp_name][f"{threshold_mode}_{threshold}"] = []
-        # else:
-        #     comp_times[exp_name] = []
-        
         for i, image_path in enumerate(true_positives[str(n)]):
             image_name = os.path.basename(image_path)
             image = Image.open(image_path)
@@ -268,21 +247,6 @@ for n in c:
                 threshold_value = int(_threshold[1])
                 threshold = threshold_value
                 percentile = threshold_value
-                # for threshold_mode in threshold_mapper:
-                #     for threshold in threshold_mapper[threshold_mode]:
-                #         mode_name = f"{threshold_mode}_{threshold}"
-                #         threshold = threshold
-                #         percentile = threshold
-                #         t0 = time.time()
-                #         explanation = explain(explainer, image_t)
-                #         torch.cuda.empty_cache()
-                #         tf = time.time()
-                #         runtime = round(tf - t0, 6)
-                #         comp_times[exp_name][mode_name].append(runtime)
-                #         print('%s(%s,%d): %d/%d(%d) runtime=%.4fs' % (exp_name, threshold_mode, threshold, i+1, len(true_positives.item()[str(n)]), n, runtime))
-                #         np.save("true_positive_explanations/%s/%s_%d/%s" % (exp_name, threshold_mode, threshold, image_name), explanation)
-                # np.save("true_positive_explanations/%s/n_nodes" % exp_name, n_nodes)
-            # else:
             t0 = time.time()
             if exp_name == "lime":
                 explanation = explain(explainer, image_RGB)

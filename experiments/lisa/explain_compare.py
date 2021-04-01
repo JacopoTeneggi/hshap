@@ -16,14 +16,13 @@ import time
 import pandas as pd
 import matplotlib.patches as patches
 import hshap
-from hshap.utils import Net
 import shap
 from gradcam.utils import visualize_cam
 from gradcam import GradCAM, GradCAMpp
 from RDE.ComputeExplainability import generate_explainability_map 
 from lime import lime_image
 
-os.environ["CUDA_VISIBLE_DEVICES"]="4"
+os.environ["CUDA_VISIBLE_DEVICES"]="8"
 
 device = torch.device("cuda:0")
 torch.backends.cudnn.deterministic = True
@@ -58,8 +57,7 @@ def init_hexp():
 
 n_nodes = []
 def hexp_explain(hexp, image_t):
-    explanation, (n, _) = hexp.explain(image_t, label=1, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold, minW=40, minH=40)
-    n_nodes.append((threshold_mode, threshold if threshold_mode == "absolute" else percentile, n))
+    (explanation, _) = hexp.explain(image_t, label=1, minW=40, minH=40, threshold_mode=threshold_mode, percentile=percentile, threshold=threshold)
     return explanation
 
 def init_gradexp():
@@ -175,22 +173,7 @@ exp_mapper = [
         "explain": hexp_explain
     },
     {
-        "name": "hexp/relative_50",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_60",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
         "name": "hexp/relative_70",
-        "init": init_hexp,
-        "explain": hexp_explain
-    },
-    {
-        "name": "hexp/relative_90",
         "init": init_hexp,
         "explain": hexp_explain
     },
@@ -240,7 +223,7 @@ true_positives = np.load("true_positives.npy", allow_pickle=True)
 np.random.seed(0)
 examples = np.random.choice(true_positives, size=300, replace=False)
 
-for exp in exp_mapper:
+for exp in [exp_mapper[4]]:
     exp_name = exp["name"]
     explainer = exp["init"]()
     explain = exp["explain"]
