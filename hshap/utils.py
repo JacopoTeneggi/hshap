@@ -4,6 +4,7 @@ from torch import Tensor
 from itertools import permutations
 import numpy as np
 from functools import reduce
+import time
 
 factorial = np.math.factorial
 
@@ -44,18 +45,15 @@ def make_masks(M: int) -> np.ndarray:
     return masks
 
 
-def mask(path: np.ndarray, x: Tensor, background: Tensor) -> torch.Tensor:
+def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
     """
     Creates a masked copy of x based on node.path and the specified background
     """
-    _x = background.clone()
-    if len(path) == 0:
-        return x.clone()
     if sum(path[-1]) == 0:
         return _x
     else:
         coords = np.array([[0, 0], [_x.size(1), _x.size(2)]], dtype=int)
-        for level in path[:-1]:
+        for level in path[1:-1]:
             if sum(level) == 1:
                 center = (
                     (coords[0][0] + coords[1][0]) / 2,

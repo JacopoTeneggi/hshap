@@ -3,12 +3,13 @@ import torch
 from torch import Tensor
 from hshap.utils import (
     hshap_features,
-    mask,
     make_masks,
     enumerate_batches,
     children_scores,
+    mask
 )
 from typing import Callable
+import time
 
 
 class Node:
@@ -20,17 +21,21 @@ class Node:
         """
         Mask input with all (16) masks required to compute Shapley values
         """
+        t0 = time.time()
         d = len(x.shape)
         q = list(np.ones(d + 1, dtype=np.integer))
         q[0] = len(masks)
-
-        masked_inputs = x.repeat(q)
-        for i, _mask in enumerate(masks):
-            masked_inputs[i] = mask(
-                np.concatenate((self.path, np.expand_dims(_mask, axis=0)), axis=0),
-                x,
-                background,
-            )
+    
+        masked_inputs = background.repeat(q)
+        masked_inputs = torch.stack(
+            [
+                mask(np.concatenate((self.path, np.expand_dims(_mask, axis=0)), axis=0), x, _x) for _mask, _x in zip(masks, masked_inputs)            
+            ],
+            0
+        )
+        t = time.time()
+        dt = np.around(t - t0, 6)
+        print(f"Masked inputs in {dt}s")
         return masked_inputs
 
 
@@ -74,9 +79,14 @@ class Explainer:
         L = len(level)
         while L > 0:
             layer_scores = np.zeros((L, self.M))
+            t0 = time.time()
             for batch_id, batch in enumerate_batches(level, batch_size):
+                t = time.time()
+                dt = np.around(t - t0, 6)
+                print(f"Got batch in {dt}s")
                 l = len(batch)
                 with torch.no_grad():
+                    t0 = time.time()
                     batch_input = torch.cat(
                         [
                             node.masked_inputs(self.masks, x, self.background)
@@ -84,6 +94,9 @@ class Explainer:
                         ],
                         0,
                     )
+                    t = time.time()
+                    dt = np.around(t - t0, 6)
+                    print(f"Masked batch in {dt}s")
                     batch_outputs = self.model(batch_input).cpu()
                     batch_outputs = batch_outputs.view(
                         (l, 2 ** self.M, batch_outputs.size(1))
@@ -96,9 +109,9 @@ class Explainer:
                             label_logits
                         )
                     torch.cuda.empty_cache()
+                t0 = time.time()
 
             flat_layer_scores = layer_scores.flatten()
-            print(flat_layer_scores)
             if threshold_mode == "absolute":
                 if any(flat_layer_scores > threshold):
                     masked_layer_scores = np.ma.masked_greater(
