@@ -49,13 +49,10 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
     """
     Creates a masked copy of x based on node.path and the specified background
     """
-<<<<<<< HEAD
+
     if sum(path[-1]) == 0:
         return _x
-=======
-    if len(path) == 0:
-        return x.clone()
->>>>>>> ca4e6e331eab32f0718352732e876315e3999a1e
+
     else:
         _x = background.clone()
         coords = np.array([[0, 0], [_x.size(1), _x.size(2)]], dtype=int)
