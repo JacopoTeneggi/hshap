@@ -49,9 +49,15 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
     """
     Creates a masked copy of x based on node.path and the specified background
     """
+<<<<<<< HEAD
     if sum(path[-1]) == 0:
         return _x
+=======
+    if len(path) == 0:
+        return x.clone()
+>>>>>>> ca4e6e331eab32f0718352732e876315e3999a1e
     else:
+        _x = background.clone()
         coords = np.array([[0, 0], [_x.size(1), _x.size(2)]], dtype=int)
         for level in path[1:-1]:
             if sum(level) == 1:
@@ -61,20 +67,31 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
                 )
                 feature_id = np.where(level == 1)[0]
                 (feature_row, feature_column) = (int(feature_id / 2), feature_id % 2)
-                coords[0][0] += feature_row * center[0]
-                coords[0][1] += feature_column * center[1]
-                coords[1][0] -= (1 - feature_row) * center[0]
-                coords[1][1] -= (1 - feature_column) * center[1]
+                coords[0][0] = center[0] if feature_row == 1 else coords[0][0]
+                coords[0][1] = center[1] if feature_column == 1 else coords[0][1]
+                coords[1][0] = center[0] if (1 - feature_row) == 1 else coords[1][0]
+                coords[1][1] = center[1] if (1 - feature_column) == 1 else coords[1][1]
+        print(coords)
         level = path[-1]
         center = ((coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2)
+        print(f"center = {center}")
         feature_ids = np.where(level == 1)[0]
         for feature_id in feature_ids:
             (feature_row, feature_column) = (int(feature_id / 2), feature_id % 2)
             feature_coords = coords.copy()
-            feature_coords[0][0] += feature_row * center[0]
-            feature_coords[0][1] += feature_column * center[1]
-            feature_coords[1][0] -= (1 - feature_row) * center[0]
-            feature_coords[1][1] -= (1 - feature_column) * center[1]
+            feature_coords[0][0] = (
+                center[0] if feature_row == 1 else feature_coords[0][0]
+            )
+            feature_coords[0][1] = (
+                center[1] if feature_column == 1 else feature_coords[0][1]
+            )
+            feature_coords[1][0] = (
+                center[0] if (1 - feature_row) == 1 else feature_coords[1][0]
+            )
+            feature_coords[1][1] = (
+                center[1] if (1 - feature_column) == 1 else feature_coords[1][1]
+            )
+            print(feature_id, feature_coords)
             _x[
                 :,
                 feature_coords[0][0] : feature_coords[1][0],

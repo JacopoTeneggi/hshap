@@ -52,7 +52,6 @@ def test_explainer():
     explanation_negative_ref = np.zeros((64, 64))
     (explanation_positive, _) = hexp.explain(x[0], 1, threshold_mode="absolute")
     (explanation_negative, _) = hexp.explain(x[1], 1, threshold_mode="absolute")
-
     assert np.array_equal(
         explanation_positive, explanation_positive_ref
     ) and np.array_equal(explanation_negative, explanation_negative_ref)
