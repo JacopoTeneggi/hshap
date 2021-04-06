@@ -8,4 +8,5 @@ experiments/
 venv/
 docs/
 **.egg-info/
+coverage.xml
 

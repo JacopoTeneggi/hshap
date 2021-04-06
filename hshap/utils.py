@@ -50,12 +50,15 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
     Creates a masked copy of x based on node.path and the specified background
     """
 
+    if len(path) == 0:
+        return x
+
     if sum(path[-1]) == 0:
         return _x
 
     else:
         coords = np.array([[0, 0], [_x.size(1), _x.size(2)]], dtype=int)
-        for level in path[1:-1]:
+        for level in path[:-1]:
             if sum(level) == 1:
                 center = (
                     (coords[0][0] + coords[1][0]) / 2,
