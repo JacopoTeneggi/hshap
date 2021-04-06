@@ -28,6 +28,6 @@ jobs:
           name: Test
           command: |
             . venv/bin/activate
-            pytest --cov=hshap tests/
+            pytest --cov=hshap
             black --check --diff ./hshap
             codecov
