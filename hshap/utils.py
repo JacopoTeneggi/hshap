@@ -54,7 +54,6 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
         return _x
 
     else:
-        _x = background.clone()
         coords = np.array([[0, 0], [_x.size(1), _x.size(2)]], dtype=int)
         for level in path[1:-1]:
             if sum(level) == 1:

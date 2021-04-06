@@ -6,7 +6,7 @@ from hshap.utils import (
     make_masks,
     enumerate_batches,
     children_scores,
-    mask
+    mask,
 )
 from typing import Callable
 import time
@@ -25,13 +25,18 @@ class Node:
         d = len(x.shape)
         q = list(np.ones(d + 1, dtype=np.integer))
         q[0] = len(masks)
-    
+
         masked_inputs = background.repeat(q)
         masked_inputs = torch.stack(
             [
-                mask(np.concatenate((self.path, np.expand_dims(_mask, axis=0)), axis=0), x, _x) for _mask, _x in zip(masks, masked_inputs)            
+                mask(
+                    np.concatenate((self.path, np.expand_dims(_mask, axis=0)), axis=0),
+                    x,
+                    _x,
+                )
+                for _mask, _x in zip(masks, masked_inputs)
             ],
-            0
+            0,
         )
         t = time.time()
         dt = np.around(t - t0, 6)
