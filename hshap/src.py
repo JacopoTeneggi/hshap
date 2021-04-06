@@ -19,7 +19,7 @@ class Node:
 
     def masked_inputs(self, masks: np.ndarray, x: Tensor, background: Tensor) -> Tensor:
         """
-        Mask input with all (16) masks required to compute Shapley values
+        Mask input with all the masks required to compute Shapley values
         """
         d = len(x.shape)
         q = list(np.ones(d + 1, dtype=np.integer))
