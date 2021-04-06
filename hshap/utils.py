@@ -67,10 +67,8 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
                 coords[0][1] = center[1] if feature_column == 1 else coords[0][1]
                 coords[1][0] = center[0] if (1 - feature_row) == 1 else coords[1][0]
                 coords[1][1] = center[1] if (1 - feature_column) == 1 else coords[1][1]
-        print(coords)
         level = path[-1]
         center = ((coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2)
-        print(f"center = {center}")
         feature_ids = np.where(level == 1)[0]
         for feature_id in feature_ids:
             (feature_row, feature_column) = (int(feature_id / 2), feature_id % 2)
@@ -87,7 +85,6 @@ def mask(path: np.ndarray, x: Tensor, _x: Tensor) -> torch.Tensor:
             feature_coords[1][1] = (
                 center[1] if (1 - feature_column) == 1 else feature_coords[1][1]
             )
-            print(feature_id, feature_coords)
             _x[
                 :,
                 feature_coords[0][0] : feature_coords[1][0],

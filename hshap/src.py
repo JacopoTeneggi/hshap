@@ -21,7 +21,7 @@ class Node:
         """
         Mask input with all (16) masks required to compute Shapley values
         """
-        t0 = time.time()
+        # t0 = time.time()
         d = len(x.shape)
         q = list(np.ones(d + 1, dtype=np.integer))
         q[0] = len(masks)
@@ -38,9 +38,9 @@ class Node:
             ],
             0,
         )
-        t = time.time()
-        dt = np.around(t - t0, 6)
-        print(f"Masked inputs in {dt}s")
+        # t = time.time()
+        # dt = np.around(t - t0, 6)
+        # print(f"Masked inputs in {dt}s")
         return masked_inputs
 
 
@@ -84,14 +84,14 @@ class Explainer:
         L = len(level)
         while L > 0:
             layer_scores = np.zeros((L, self.M))
-            t0 = time.time()
+            # t0 = time.time()
             for batch_id, batch in enumerate_batches(level, batch_size):
-                t = time.time()
-                dt = np.around(t - t0, 6)
-                print(f"Got batch in {dt}s")
+                # t = time.time()
+                # dt = np.around(t - t0, 6)
+                # print(f"Got batch in {dt}s")
                 l = len(batch)
                 with torch.no_grad():
-                    t0 = time.time()
+                    # t0 = time.time()
                     batch_input = torch.cat(
                         [
                             node.masked_inputs(self.masks, x, self.background)
@@ -99,9 +99,9 @@ class Explainer:
                         ],
                         0,
                     )
-                    t = time.time()
-                    dt = np.around(t - t0, 6)
-                    print(f"Masked batch in {dt}s")
+                    # t = time.time()
+                    # dt = np.around(t - t0, 6)
+                    # print(f"Masked batch in {dt}s")
                     batch_outputs = self.model(batch_input).cpu()
                     batch_outputs = batch_outputs.view(
                         (l, 2 ** self.M, batch_outputs.size(1))
@@ -155,11 +155,11 @@ class Explainer:
             L = len(level)
 
         saliency_map = torch.zeros(1, self.size[0], self.size[1])
-        background = torch.zeros(1, self.size[0], self.size[1])
+        # background = torch.zeros(1, self.size[0], self.size[1])
         for leaf in leafs:
             saliency_map += mask(
-                leaf.path, torch.ones(1, self.size[0], self.size[1]), background
+                leaf.path, torch.ones(1, self.size[0], self.size[1]), torch.zeros(1, self.size[0], self.size[1])
             )
-        norm = sum(saliency_map.flatten())
-        saliency_map = saliency_map / norm if norm > 0 else saliency_map
+        # norm = sum(saliency_map.flatten())
+        # saliency_map = saliency_map / norm if norm > 0 else saliency_map
         return saliency_map[0].numpy(), leafs
