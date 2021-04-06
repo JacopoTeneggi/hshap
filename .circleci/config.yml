@@ -29,5 +29,5 @@ jobs:
           command: |
             . venv/bin/activate
             pytest --cov=hshap tests/
-            black --check --diff ./hshap ./tests
+            black --check --diff ./hshap
             codecov
