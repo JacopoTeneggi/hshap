@@ -121,14 +121,14 @@ class Explainer:
                 else:
                     masked_layer_scores = np.zeros(layer_scores.shape)
             if threshold_mode == "relative":
-                threshold = np.percentile(flat_layer_scores, threshold)
-                if threshold <= 0:
+                t = np.percentile(flat_layer_scores, threshold)
+                if t <= 0:
                     masked_layer_scores = np.ma.masked_greater(
-                        flat_layer_scores, threshold
+                        flat_layer_scores, t
                     ).mask.reshape(layer_scores.shape)
                 else:
                     masked_layer_scores = np.ma.masked_greater_equal(
-                        flat_layer_scores, threshold
+                        flat_layer_scores, t
                     ).mask.reshape(layer_scores.shape)
 
             next_level = []
