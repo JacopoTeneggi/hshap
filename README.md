@@ -23,11 +23,11 @@ h-Shap currently explains PyTorch models only. Given a model `model`, a referenc
 
 ```python
 hexp = hshap.src.Explainer(model, ref, s)
-explanation, leafs = hehxp.explain(image, label=1, threshold_mode=threshold_mode, threshold=threshold)
+explanation, leafs = hexp.explain(image, label=1, threshold_mode=threshold_mode, threshold=threshold)
 ```
 
-where `s` is a minimal features size (e.g. `40 x 40` pixels), `threshold_mode` can be `"absolute"` or `"relative"`, and `threshold` is a relevance tolerance. See the documentation for further details on the parameters.
+where `s` is a minimal features size (e.g. `40 x 40` pixels), `threshold_mode` can be `"absolute"` or `"relative"`, and `threshold` is a relevance tolerance. See [`demo/`](https://github.com/JacopoTeneggi/hshap/tree/refactor/demo) for further details on the parameters.
 
 ## Demo
 
-[`/demo`](https://github.com/JacopoTeneggi/hshap/tree/refactor/demo) contains a simple notebook to showcase h-Shap's functionality on the [BBBC041](https://bbbc.broadinstitute.org/BBBC041) dataset. The dataset comprises blood smears for malaria patients, and the model is trained to label positively all images that contain at least one _trophozoite_, one of the types of cells that indicate malaria. h-Shap then explains the model predictions and retrieves the sick cells in the images.
+[`demo/`](https://github.com/JacopoTeneggi/hshap/tree/refactor/demo) contains a simple notebook to showcase h-Shap's functionality on the [BBBC041](https://bbbc.broadinstitute.org/BBBC041) dataset. The dataset comprises blood smears for malaria patients, and the model is trained to label positively all images that contain at least one _trophozoite_, one of the types of cells that indicate malaria. h-Shap then explains the model predictions and retrieves the sick cells in the images.
