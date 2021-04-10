@@ -48,6 +48,9 @@ class Explainer:
         min_size: int,
         M: int = 4,
     ) -> None:
+        """
+        Initialize explainer
+        """
         self.model = model
         self.background = background
         self.size = (self.background.shape[1], self.background.shape[2])
@@ -57,6 +60,9 @@ class Explainer:
         self.features = hshap_features(M)
 
     def is_leaf(self, node: Node) -> bool:
+        """
+        Check if node is a leaf
+        """
         if len(node.path) == self.stop_l:
             return True
         else:
@@ -67,9 +73,11 @@ class Explainer:
         x: Tensor,
         label: int,
         threshold_mode: str = "absolute",
-        threshold=0,
-        percentile=50,
+        threshold: float = 0.0,
     ) -> np.ndarray:
+        """
+        Explain image
+        """
         # Define auxilliary variables
         batch_size = 2
         # Initialize root node
@@ -113,7 +121,7 @@ class Explainer:
                 else:
                     masked_layer_scores = np.zeros(layer_scores.shape)
             if threshold_mode == "relative":
-                threshold = np.percentile(flat_layer_scores, percentile)
+                threshold = np.percentile(flat_layer_scores, threshold)
                 if threshold <= 0:
                     masked_layer_scores = np.ma.masked_greater(
                         flat_layer_scores, threshold
